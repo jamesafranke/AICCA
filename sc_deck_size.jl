@@ -59,11 +59,11 @@ function process_year(year, startlat, endlat, startlon, endlon, region)
     CSV.write("AICCA/data/processed/sc_counts/$(year)_subtropic_$(region)_counts.csv", dfo)
 end 
 
-for year in 2003:2021 process_year(year, -45, 0, -115, -70, "s_pacific") end
+for year in 2003:2021 process_year( year, -45, 0, -115, -70, "s_pacific" ) end
 
-for year in 2003:2021 process_year(year, 0, 45, -140, -95, "n_pacific") end
+for year in 2003:2021 process_year( year, 0, 45, -140, -95, "n_pacific" ) end
 
-for year in 2003:2021 process_year(year, -35, 5, -22, 18, "africa") end
+for year in 2003:2021 process_year( year, -35, 5, -22, 18, "africa" ) end
 
-for year in 2003:2021 process_year(year, -45, -5, 80, 120, "indian") end
+for year in 2003:2021 process_year( year, -45, -5, 80, 120, "indian" ) end
 
