@@ -1,4 +1,3 @@
-#!/bin/env julia
 using Plots, UnicodePlots; plotlyjs(); theme(:dark) 
 using DataFrames, DataFramesMeta, Query, CSV, Dates
 using DataFramesMeta: @orderby
