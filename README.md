@@ -1,6 +1,8 @@
 # AICCA
 
-Processing scripts for the AICCA dataset based on https://arxiv.org/abs/2209.15585
+Processing scripts for the AICCA deep learning based cloud classifcation dataset:
+* https://arxiv.org/abs/2209.15585
+* ...
 
 
 # workflow
