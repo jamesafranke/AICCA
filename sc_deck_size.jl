@@ -15,7 +15,7 @@ append!(dfc, DataFrame( type_ = "mclosed", idn = 0, Label = [13,14,15,16] ) ) #H
 ################################ process years to get sc deck size #################################
 function process_year(year, startlat, endlat, startlon, endlon, region)
     df = CSV.read( "AICCA/data/processed/$(year)_subtropic.csv", dateformat="yyyy-mm-dd HH:MM:SS", DataFrame )
-    df = df |> @filter(_.lat > startlat && _.lat < endlat && _.lon > startlon && _.lon < endlon)  |> DataFrame
+    df = df |> @filter(_.lat > startlat && _.lat < endlat && _.lon > startlon && _.lon < endlon) |> DataFrame
     df.lat = floor.(df.lat)
     df.lon = floor.(df.lon)
     df = @orderby(df, :Timestamp)
@@ -53,17 +53,16 @@ function process_year(year, startlat, endlat, startlon, endlon, region)
         segs  = watershed( dist, marks )
         lab   = labels_map( segs ) .* bw
         count = counts( lab )
-        append!( dfo, DataFrame( members = count[2:end], date = date ) )
 
+        append!( dfo, DataFrame( members = count[2:end], date = date ) )
     end
     CSV.write("AICCA/data/processed/sc_counts/$(year)_subtropic_$(region)_counts.csv", dfo)
 end 
 
-for year in 2003:2021 process_year( year, -45, 0, -115, -70, "s_pacific" ) end
+for year in 2003:2021 process_year( year, -45, 0, -115, -70, "spacific" ) end
 
 for year in 2003:2021 process_year( year, 0, 45, -140, -95, "n_pacific" ) end
 
 for year in 2003:2021 process_year( year, -35, 5, -22, 18, "africa" ) end
 
 for year in 2003:2021 process_year( year, -45, -5, 80, 120, "indian" ) end
-
