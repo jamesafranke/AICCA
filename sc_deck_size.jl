@@ -1,4 +1,3 @@
-using Plots 
 using DataFrames, DataFramesMeta, CSV, Dates
 using Statistics, StatsBase
 using ImageMorphology, ImageSegmentation
@@ -14,7 +13,7 @@ append!(dfc, DataFrame( type_ = "closed", idn = 0, Label = [21,24,28,31,33,35]  
 ################################ process years to get sc deck size #################################
 function process_year(year, startlat, endlat, startlon, endlon, region)
     df = CSV.read( "AICCA/data/processed/subtrop/$(year)_subtropic.csv", dateformat = "yyyy-mm-dd HH:MM:SS", DataFrame )
-    @subset!(df, :lat .> startlat, :lat .< endlat, :lon .> startlon, :lon .< endlon) 
+    @subset! df :lat .> startlat :lat .< endlat :lon .> startlon :lon .< endlon
     df.lat = floor.(df.lat);  df.lon = floor.(df.lon)
     df = orderby(df, :Timestamp)
     leftjoin!(df, dfc, on = :Label)
@@ -23,13 +22,13 @@ function process_year(year, startlat, endlat, startlon, endlon, region)
     dfo = DataFrame()
     dates = Date(year,1,1):Day(1):Date(year,12,31)
     @showprogress for date in dates
-        dft = @subset(df, Dates.Date.(:Timestamp) .== date )
+        dft = @subset df Dates.Date.(:Timestamp) .== date
         ndim = endlat - startlat
         m = ones( ndim, ndim ); m[:,:] .= -1
 
         for (i, lon) in enumerate(startlon:1:endlon)
             for (j, lat) in enumerate(startlat:1:endlat)
-                temp = @subset(dft, :lat .== lat, :lon .== lon )
+                temp = @subset dft, :lat .== lat, :lon .== lon
                 try m[j,i] = temp.idn[1] catch e end
             end
         end
