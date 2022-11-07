@@ -1,7 +1,7 @@
 using Plots; gr(); theme(:juno) 
 using CSV, DataFrames, DataFramesMeta, Dates 
 using Statistics
-#using Base.Threads; nthreads()
+if occursin("AICCA", pwd()) == false cd("AICCA") else end
 root = pwd()
 
 # load in class data for the tropics merged with climate vars

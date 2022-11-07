@@ -2,6 +2,8 @@ using DataFrames, DataFramesMeta, CSV, Dates
 using Statistics, StatsBase
 using ImageMorphology, ImageSegmentation
 using ProgressMeter
+if occursin("AICCA", pwd()) == false cd("AICCA") else end
+root = pwd()
 
 ################################ Cloud classes #################################
 dfc = DataFrame(type_ = "high", idn = 1, Label = [1,2,3,4,5,6,7,8,9,10,11,12,17])
@@ -12,7 +14,7 @@ append!(dfc, DataFrame( type_ = "closed", idn = 0, Label = [21,24,28,31,33,35]  
 
 ################################ process years to get sc deck size #################################
 function process_year(year, startlat, endlat, startlon, endlon, region)
-    df = CSV.read( "AICCA/data/processed/subtrop/$(year)_subtropic.csv", dateformat = "yyyy-mm-dd HH:MM:SS", DataFrame )
+    df = CSV.read( joinpath(root,"data/processed/subtrop/$(year)_subtropic.csv"), dateformat = "yyyy-mm-dd HH:MM:SS", DataFrame )
     @subset! df :lat .> startlat :lat .< endlat :lon .> startlon :lon .< endlon
     df.lat = floor.(df.lat);  df.lon = floor.(df.lon)
     df = orderby(df, :Timestamp)
@@ -55,7 +57,7 @@ function process_year(year, startlat, endlat, startlon, endlon, region)
 
         append!( dfo, DataFrame( members = count[2:end], date = date ) )
     end
-    CSV.write("AICCA/data/processed/sc_counts_no_mid/$(year)_subtropic_$(region)_counts.csv", dfo)
+    CSV.write(joinpath(root,"/data/processed/sc_counts_no_mid/$(year)_subtropic_$(region)_counts.csv"), dfo)
 end 
 
 for year in 2003:2021 process_year( year, -45, 0, -115, -70, "spacific" ) end

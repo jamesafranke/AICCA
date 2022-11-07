@@ -1,14 +1,17 @@
-using DataFrames, Query, CSV, Dates
+using DataFrames, DataFramesMeta, CSV, Dates
+if occursin("AICCA", pwd()) == false cd("AICCA") else end
+root = pwd()
 
 #################### process data to subtropic only ########################
 for i in 2003:2021
     root = "AICCA/data/raw/$i/"
-    fl = readdir(root)
+    fl = readdir( joinpath(root, "data/raw/$i/") )
     df = DataFrame()
-    for i in fl
-        temp = CSV.read( joinpath(root, i), DataFrame ) |> @filter(_.lon > -145 && _.lon < 120) |> DataFrame
-        append!( df, temp |> @filter(_.lat < 45 && _.lat > -45) |> DataFrame )
+    for j in fl
+        temp = CSV.read( joinpath(root, "data/raw/$i/", j), DataFrame )
+        @subset! temp :lon>-145 :lon<120 :lat<45 :lat>-45
+        append!( df, temp )
     end
-    transform!( df, :Timestamp => ByRow( x -> x[1:19] ) => :Timestamp)
-    CSV.write("AICCA/data/processed/$(i)_subtropic.csv", df)
+    @transform! df @byrow :Timestamp=:Timestamp[1:19]
+    CSV.write( joinpath(root,"data/processed/$(i)_subtropic.csv", df) )
 end
