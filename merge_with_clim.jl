@@ -4,13 +4,14 @@ root = pwd()
 
 # Load in the class data (from only the tropics) and merge with # merge class data with sst, subsidence, and aerosol optical
 path = joinpath(root,"data/processed/subtrop/")
-fl = filter( !contains(".DS"), readdir(patht) )
+fl = filter( !contains(".DS"), readdir(path) )
 df = DataFrame()
 for i in fl append!( df, CSV.read( joinpath(path, i), dateformat="yyyy-mm-dd HH:MM:SS", DataFrame ) ) end
-df.lat = floor.(df.lat) .+ 0.5;  df.lon = floor.(df.lon) .+0.5
+df.lat = floor.(df.lat) .+ 0.5
+df.lon = floor.(df.lon) .+ 0.5
 @select! df :Timestamp :lat :lon :Label 
-df = @orderby df :Timestamp
 @transform! df :year=Year.(:Timestamp) :month=Month.(:Timestamp)
+df = @orderby df :Timestamp
 
 ## Monthly vertical velocity from ERA5
 dfw = CSV.read( joinpath(root,"data/processed/era5_700hpa_vertical_velocity_1deg.csv"), dateformat="yyyy-mm-ddTHH:MM:SS.s", DataFrame ) 
@@ -36,10 +37,12 @@ dfa = CSV.read( joinpath(root,"data/processed/avhrr_aot_month.csv"), dateformat=
 @select! dfa :year :month :lat :lon :aot1
 unique!(dfa)
 
+# join em all up by location, month, and year
 leftjoin!( df, dfw, on = [:year, :month, :lat, :lon] )
 leftjoin!( df, dfs, on = [:year, :month, :lat, :lon] )
 leftjoin!( df, dfa, on = [:year, :month, :lat, :lon] )
 
+# write dataframe with lable, sst, aot, and w to csv
 @select! df :Timestamp :lat :lon :Label :w :sst :aot1 
 CSV.write( joinpath(root,"data/processed/all_subtropic_label_w_sst_aot.csv"), df, index = false)
 
