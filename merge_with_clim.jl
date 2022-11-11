@@ -9,9 +9,8 @@ df = DataFrame()
 for i in fl append!( df, CSV.read( joinpath(path, i), dateformat="yyyy-mm-dd HH:MM:SS", DataFrame ) ) end
 df.lat = floor.(df.lat) .+ 0.5
 df.lon = floor.(df.lon) .+ 0.5
-@select! df :Timestamp :lat :lon :Label 
+@select! df :Timestamp :lat :lon :Label :platform
 @transform! df :year=Year.(:Timestamp) :month=Month.(:Timestamp)
-df = @orderby df :Timestamp
 
 ## Monthly vertical velocity from ERA5
 dfw = CSV.read( joinpath(root,"data/processed/era5_700hpa_vertical_velocity_1deg.csv"), dateformat="yyyy-mm-ddTHH:MM:SS.s", DataFrame ) 
@@ -21,6 +20,15 @@ dftemp = @subset dfw :lon .> 180
 dftemp.lon .-= 360
 @subset! dfw :lon .< 180
 append!( dfw, dftemp )
+
+## Monthly lower tropospheric stability from ERA5
+dfl = CSV.read( joinpath(root,"data/processed/era5_LTS.csv"), dateformat="yyyy-mm-ddTHH:MM:SS.s", DataFrame ) 
+@transform! dfl :year=Year.(:time) :month=Month.(:time)
+@select! dfl :year :month :lat :lon :w
+dftemp = @subset dfl :lon .> 180
+dftemp.lon .-= 360
+@subset! dfl :lon .< 180
+append!( dfl, dftemp )
 
 ## Monthly sst from NOAA NCEP Reanaluysis
 dfs = CSV.read( joinpath(root,"data/processed/noaa_ncep_sst.csv"), dateformat="yyyy-mm-ddTHH:MM:SS.s", DataFrame )
@@ -39,10 +47,12 @@ unique!(dfa)
 
 # join em all up by location, month, and year
 leftjoin!( df, dfw, on = [:year, :month, :lat, :lon] )
+leftjoin!( df, dfl, on = [:year, :month, :lat, :lon] )
 leftjoin!( df, dfs, on = [:year, :month, :lat, :lon] )
 leftjoin!( df, dfa, on = [:year, :month, :lat, :lon] )
 
 # write dataframe with lable, sst, aot, and w to csv
-@select! df :Timestamp :lat :lon :Label :w :sst :aot1 
-CSV.write( joinpath(root,"data/processed/all_subtropic_label_w_sst_aot.csv"), df, index = false)
+@select! df :Timestamp :lat :lon :Label :platform :w :lst :sst :aot1 
+df = @orderby df :Timestamp
+CSV.write( joinpath(root,"data/processed/all_subtropic_label_w_lts_sst_aot.csv"), df, index = false)
 
