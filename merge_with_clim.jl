@@ -20,7 +20,7 @@ dftemp.lon .-= 360
 @subset! dfw :lon .< 180
 append!( dfw, dftemp )
 
-## Monthly lower tropospheric stability from ERA5
+## Monthly lower tropospheric stability from ERA5 (700hpa potential temp - 1000hpa potential temp)
 dfl = CSV.read( joinpath(pwd(),"data/processed/era5_LTS.csv"), dateformat="yyyy-mm-ddTHH:MM:SS.s", DataFrame ) 
 @transform! dfl :year=Year.(:time) :month=Month.(:time)
 @select! dfl :year :month :lat :lon :w

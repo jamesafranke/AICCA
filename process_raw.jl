@@ -3,12 +3,11 @@ using ProgressMeter, Statistics
 if occursin("AICCA", pwd()) == false cd("AICCA") else end
 
 ########################################  process data to subtropic only ############################################ 
-for year in 2000:2021
+for year in 2006:2021
     df = DataFrame()
     fl = filter( !contains(".DS"), readdir( joinpath(pwd(), "data/raw/$year/") ) )
     @showprogress for file in fl
         temp = CSV.read( joinpath(pwd(), "data/raw/$year/", file), DataFrame ) #dateformat="yyyy-mm-ddTHH:MM:SS.s",
-        #@subset! temp :lon.>-145 :lon.<120 
         @subset! temp :lat.>-40 :lat.<40
         append!( df, temp )
     end
