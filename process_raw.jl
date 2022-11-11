@@ -1,21 +1,20 @@
 using DataFrames, DataFramesMeta, CSV, Dates
-using ProgressMeter
-using Statistics
-if occursin("AICCA", pwd()) == false cd("AICCA") else end; root = pwd()
+using ProgressMeter, Statistics
+if occursin("AICCA", pwd()) == false cd("AICCA") else end
 
 ########################################  process data to subtropic only ############################################ 
 for year in 2000:2021
     df = DataFrame()
-    fl = filter( !contains(".DS"), readdir( joinpath(root, "data/raw/$year/") ) )
+    fl = filter( !contains(".DS"), readdir( joinpath(pwd(), "data/raw/$year/") ) )
     @showprogress for file in fl
-        temp = CSV.read( joinpath(root, "data/raw/$i/", file), DataFrame ) #dateformat="yyyy-mm-ddTHH:MM:SS.s",
+        temp = CSV.read( joinpath(pwd(), "data/raw/$year/", file), DataFrame ) #dateformat="yyyy-mm-ddTHH:MM:SS.s",
         #@subset! temp :lon.>-145 :lon.<120 
-        @subset! temp :lat.>-45 :lat.<45 
+        @subset! temp :lat.>-40 :lat.<40
         append!( df, temp )
     end
     for col in eachcol(df) replace!( col, NaN => missing ) end
     @transform! df @byrow :Timestamp=:Timestamp[1:19]
-    CSV.write( joinpath(root,"data/processed/subtrop_all/$(year)_subtropic.csv"), df )
+    CSV.write( joinpath(pwd(),"data/processed/subtropic/$(year)_40NS.csv"), df )
     df = nothing
 end
 
@@ -28,9 +27,9 @@ m25(x)   = quantile( skipmissing(x), 0.75 )
 
 for year in 2011:2021
     df = DataFrame()
-    fl = filter( !contains(".DS"), readdir( joinpath(root, "data/raw/$year/") ) )
+    fl = filter( !contains(".DS"), readdir( joinpath(pwd(), "data/raw/$year/") ) )
     @showprogress for j in fl
-        temp = CSV.read( joinpath(root, "data/raw/$year/", j), DataFrame )
+        temp = CSV.read( joinpath(pwd(), "data/raw/$year/", j), DataFrame )
         @select! temp :Label :Cloud_Optical_Thickness_mean :Cloud_Top_Pressure_mean :Cloud_Effective_Radius_mean :Cloud_Water_Path_mean :Cloud_Fraction
         append!( df, temp )
     end
