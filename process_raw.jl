@@ -21,10 +21,10 @@ end
 
 
 ########################################  process data to mean class properties ############################################ 
-medm(x) = median( skipmissing(x) )
+medm(x)  = median( skipmissing(x) )
 meanm(x) = mean( skipmissing(x) )
-m75(x) = quantile( skipmissing(x), 0.25)
-m25(x) = quantile( skipmissing(x), 0.75)
+m75(x)   = quantile( skipmissing(x), 0.25 )
+m25(x)   = quantile( skipmissing(x), 0.75 )
 
 for year in 2011:2021
     df = DataFrame()
