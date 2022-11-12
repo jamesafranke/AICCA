@@ -1,28 +1,64 @@
-using Plots; gr(); Plots.theme(:default)
+using Plots; gr(); Plots.theme(:default) #plotlyjs()
 using CSV, DataFrames, DataFramesMeta, Dates 
 using Statistics
 if occursin("AICCA", pwd()) == false cd("AICCA") else end
 
 # load in class data for the tropics merged with climate vars
-df = CSV.read( joinpath(pwd(), "data/processed/all_subtropic_label_w_sst_aot.csv"), dateformat="yyyy-mm-ddTHH:MM:SS.s", DataFrame )
+df = CSV.read( joinpath(pwd(), "data/processed/all_subtropic_label_with_climate.csv"), dateformat="yyyy-mm-ddTHH:MM:SS.s", DataFrame )
+@subset! df :Label.!=43 
+dfb = @subset df :lat.>10  :lat.<40 :lon.>-160 :lon.<-95  #north pacific
+dfp = @subset df :lat.>-40 :lat.<7  :lon.>-115 :lon.<-70  #south pacific
+dfa = @subset df :lat.>-35 :lat.<6  :lon.>-30  :lon.<20   #south alantic
+dfi = @subset df :lat.>-35 :lat.<0  :lon.>55   :lon.<120  #indian
+regions = zip( ["NP","SP","SA","IN"],[dfb, dfp, dfa, dfi] )
 
-# get the sub-daily transisions
-dft = @chain df begin
-    @select :Timestamp :lat :lon :Label
-    @transform :day=Date.(:Timestamp)
-    @by [:lat, :lon, :day] :class=first(:Label) :nextclass=last(:Label) :day_num=size(:Label)[1] :hour_diff=Dates.value.(:Timestamp[end]-:Timestamp[1])./3_600_000
-    @subset :day_num.>1
-    @subset :class.!=43 
-    @subset :nextclass.!=43 
-    @rsubset :class.!=0 || :nextclass.!=0
+
+
+
+
+
+
+
+
+
+
+
+### test subsidence or stability or sst ####
+for (region, dftemp) in regions
+    case = "stable boundary layer"
+    dfc = @chain dftemp begin  
+        @subset :lts .>16.4 #:blh.<830  #:w.>0.03
+        dropmissing( :aot1 )
+        @transform :aotbin=round.(:aot1, digits=1) 
+        @aside replace!(_.aotbin, -0.0=>0.0)
+        @by [:aotbin, :Label] :counts=size(:lat)[1]
+        @aside dft = @by _ :aotbin :total_per_bin=sum(:counts)
+        leftjoin( dft, on=:aotbin )
+        @transform :classshare=:counts./:total_per_bin
+    end
+
+    scatter(dfc.aotbin, dfc.classshare *100, group = dfc.Label, size=(400,400), leg=false, dpi=800)
+    xlims!(-0.21,1.01)
+    ylims!(0, 60)
+    xlabel!("aerosol optical depth")
+    ylabel!("class share [%]")
+    title!("$(region) $(case)")
+    png("./figures/$(region)_$(case).png")
 end
 
+@transform! dfb :hour=Hour.(:Timestamp)
+mean( dfb.hour )
 
-# plot some class transisons 
-temp = @subset dft :class .== 33 
-histogram( temp.nextclass, xticks = 0:1:42, leg = false, size = (900,500) )
-temp = @subset dft :class .== 32 
-histogram!( temp.nextclass, xticks = 0:1:42, leg = false, size = (900,500), alpha = 0.5 )
+histogram( dfa.lts, size=(500,500), dpi=800 )
+xlims!(13, 16)
 
+histogram( dfa.w, size=(500,500), dpi=300 )
+xlims!(13, 16)
 
+histogram( dfa.blh, size=(500,500), dpi=800 )
+xlims!(13, 16)
 
+median(dfa.lts)
+median(dfb.lts)
+median(dfp.lts)
+median(dfi.lts)

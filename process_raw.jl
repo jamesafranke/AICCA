@@ -4,7 +4,7 @@ if occursin("AICCA", pwd()) == false cd("AICCA") else end
 
 
 ########################################  process data to subtropic only ################################################# 
-for year in 2018:2021
+for year in 2000:2021
     df = DataFrame()
     fl = filter( !contains(".DS"), readdir( joinpath(pwd(), "data/raw/$year/") ) )
     @showprogress for file in fl
@@ -18,14 +18,13 @@ for year in 2018:2021
     df = nothing
 end
 
-
 ########################################  process data to mean class properties ############################################ 
 medm(x)  = median(   skipmissing(x) )
 meanm(x) = mean(     skipmissing(x) )
 m75(x)   = quantile( skipmissing(x), 0.25 )
 m25(x)   = quantile( skipmissing(x), 0.75 )
 
-for year in 2011:2021
+for year in 2000:2021
     df = DataFrame()
     fl = filter( !contains(".DS"), readdir( joinpath(pwd(), "data/raw/$year/") ) )
     @showprogress for j in fl
@@ -43,6 +42,6 @@ for year in 2011:2021
     :er25=m25(:Cloud_Effective_Radius_mean),  :wp25=m25(:Cloud_Water_Path_mean),  :cf25=m25(:Cloud_Fraction),  
     :ot75=m75(:Cloud_Optical_Thickness_mean), :tp75=m75(:Cloud_Top_Pressure_mean), 
     :er75=m75(:Cloud_Effective_Radius_mean),  :wp75=m75(:Cloud_Water_Path_mean),  :cf75=m75(:Cloud_Fraction) )
-    CSV.write( joinpath(root,"data/processed/med_iqr_props/$(year)_class_mean_props.csv"), df)
+    CSV.write( joinpath(pwd(),"data/processed/mean_props/$(year)_class_mean_props.csv"), df)
     df = nothing
 end
