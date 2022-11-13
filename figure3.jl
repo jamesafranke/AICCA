@@ -13,16 +13,6 @@ dfi = @subset df :lat.>-35 :lat.<0  :lon.>55   :lon.<120  #indian
 regions = zip( ["NP","SP","SA","IN"],[dfb, dfp, dfa, dfi] )
 
 
-
-
-
-
-
-
-
-
-
-
 ### test subsidence or stability or sst ####
 for (region, dftemp) in regions
     case = "stable boundary layer"
