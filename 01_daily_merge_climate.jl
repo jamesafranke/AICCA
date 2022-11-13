@@ -30,14 +30,14 @@ dftemp.lon .-= 360
 append!( dfb, dftemp )
 
 ## Monthly AOT from AHVRR satellite ##
-dfa = CSV.read( joinpath(pwd(),"data/processed/avhrr_aot.csv"), dateformat="yyyy-mm-ddTHH:MM:SS.s", DataFrame )
-@transform! dfa :year=Year.(:time) :day=Dayofyear.(:time)
-@select! dfa :year :day :lat :lon :aot1
+#dfa = CSV.read( joinpath(pwd(),"data/processed/avhrr_aot.csv"), dateformat="yyyy-mm-ddTHH:MM:SS.s", DataFrame )
+#@transform! dfa :year=Year.(:time) :day=Dayofyear.(:time)
+#@select! dfa :year :day :lat :lon :aot1
 
 ## join em all up by location, month, and year ##
 leftjoin!( df, dfl, on = [:year, :day, :lat, :lon] )
 leftjoin!( df, dfb, on = [:year, :day, :lat, :lon] )
-leftjoin!( df, dfa, on = [:year, :day, :lat, :lon] )
+#leftjoin!( df, dfa, on = [:year, :day, :lat, :lon] )
 
 ## write dataframe with lable, sst, aot, and w to csv ##
 @select! df :Timestamp :lat :lon :Label :platform :lts :blh :aot1 

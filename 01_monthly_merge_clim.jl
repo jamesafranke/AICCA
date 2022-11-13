@@ -12,7 +12,7 @@ df.lon = floor.(df.lon) .+ 0.5
 @transform! df :year=Year.(:Timestamp) :month=Month.(:Timestamp)
 
 ## Monthly vertical velocity from ERA5 ##
-dfw = CSV.read( joinpath(pwd(),"data/processed/era5_700hpa_w.csv"), dateformat="yyyy-mm-ddTHH:MM:SS.s", DataFrame ) 
+dfw = CSV.read( joinpath(pwd(),"data/processed/monthly_climate/era5_700hpa_w.csv"), dateformat="yyyy-mm-ddTHH:MM:SS.s", DataFrame ) 
 @transform! dfw :year=Year.(:time) :month=Month.(:time)
 @select! dfw :year :month :lat :lon :w
 dftemp = @subset dfw :lon.>180
@@ -21,7 +21,7 @@ dftemp.lon .-= 360
 append!( dfw, dftemp )
 
 ## Monthly lower tropospheric stability from ERA5 (700hpa potential temp - 1000hpa potential temp) ##
-dfl = CSV.read( joinpath(pwd(),"data/processed/era5_lts.csv"), dateformat="yyyy-mm-ddTHH:MM:SS.s", DataFrame ) 
+dfl = CSV.read( joinpath(pwd(),"data/processed/monthly_climate/era5_lts.csv"), dateformat="yyyy-mm-ddTHH:MM:SS.s", DataFrame ) 
 @transform! dfl :year=Year.(:time) :month=Month.(:time)
 @select! dfl :year :month :lat :lon :lts
 dftemp = @subset dfl :lon.>180
@@ -30,7 +30,7 @@ dftemp.lon .-= 360
 append!( dfl, dftemp )
 
 ## Monthly boundary layer height from ERA5 ##
-dfb = CSV.read( joinpath(pwd(),"data/processed/era5_blh.csv"), dateformat="yyyy-mm-ddTHH:MM:SS.s", DataFrame ) 
+dfb = CSV.read( joinpath(pwd(),"data/processed/monthly_climate/era5_blh.csv"), dateformat="yyyy-mm-ddTHH:MM:SS.s", DataFrame ) 
 @transform! dfb :year=Year.(:time) :month=Month.(:time)
 @select! dfb :year :month :lat :lon :blh
 dftemp = @subset dfb :lon.>180
@@ -39,7 +39,7 @@ dftemp.lon .-= 360
 append!( dfb, dftemp )
 
 ## Monthly sst from NOAA NCEP Reanaluysis ##
-dfs = CSV.read( joinpath(pwd(),"data/processed/noaa_ncep_sst.csv"), dateformat="yyyy-mm-ddTHH:MM:SS.s", DataFrame )
+dfs = CSV.read( joinpath(pwd(),"data/processed/monthly_climate/noaa_ncep_sst.csv"), dateformat="yyyy-mm-ddTHH:MM:SS.s", DataFrame )
 @transform! dfs :year=Year.(:time) :month=Month.(:time) 
 @select! dfs :year :month :lat :lon :sst
 dftemp = @subset dfs :lon.>180
@@ -48,7 +48,7 @@ dftemp.lon .-= 360
 append!( dfs, dftemp )
 
 ## Monthly AOT from AHVRR satellite ##
-dfa = CSV.read( joinpath(pwd(),"data/processed/avhrr_aot_month.csv"), dateformat="yyyy-mm-ddTHH:MM:SS.s", DataFrame )
+dfa = CSV.read( joinpath(pwd(),"data/processed/monthly_climate/avhrr_aot_month.csv"), dateformat="yyyy-mm-ddTHH:MM:SS.s", DataFrame )
 @transform! dfa :year=Year.(:time) :month=Month.(:time)
 @select! dfa :year :month :lat :lon :aot1
 
