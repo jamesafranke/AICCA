@@ -1,19 +1,14 @@
 using Plots; gr(); Plots.theme(:default) #plotlyjs()
-using CSV, DataFrames, DataFramesMeta, Dates 
+using Arrow, DataFrames, DataFramesMeta, Dates 
 using Statistics
 if occursin("AICCA", pwd()) == false cd("AICCA") else end
 
 # load in class data for the tropics merged with climate vars
-df = CSV.read( joinpath(pwd(), "data/processed/all_subtropic_label_with_climate.csv"), dateformat="yyyy-mm-ddTHH:MM:SS.s", DataFrame )
-@subset! df :Label.!=43 
-dfp = DataFrame()
-append!(dfp,  @subset df :lat.>7  :lat.<39 :lon.>-165 :lon.<-100)
-append!(dfp, @subset df :lat.>-39 :lat.<3  :lon.>-120 :lon.<-70)
-append!(dfp, @subset df :lat.>-35 :lat.<0  :lon.>-25  :lon.<20 )
-df = nothing
-dropmissing!(dfp, [:lts, :blh] )
+dft = DataFrame( Arrow.Table( joinpath(pwd(),"data/processed/subtropic_sc_label_daily_clim.arrow")) )
 
-dfc = @chain dfp begin  
+dropmissing!(df, [:lts, :blh] )
+
+dfc = @chain df begin  
     dropmissing( [:lts, :blh] )
     @transform :ltsbin=round.(:lts.*2, digits=0)./2 :blhbin=round.(:blh.*4, digits=-2) ./4
     @by [:ltsbin, :blhbin, :Label] :counts=size(:lat)[1]
@@ -58,6 +53,17 @@ ylims!(212.5, 1425-12.5)
 png("./figures/heatmap.png")
 
 
+
+
+
+
+
+
+
+
+
+df = CSV.read( joinpath(pwd(), "data/processed/all_subtropic_label_with_climate.csv"), dateformat="yyyy-mm-ddTHH:MM:SS.s", DataFrame )
+@subset! df :Label.!=43 
 temp = @subset dfp :Label.!=0
 temp = @by temp [:lat, :lon] :counts=size(:lat)[1]
 temp = @orderby temp :counts rev=true
