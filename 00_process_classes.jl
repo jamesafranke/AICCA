@@ -1,22 +1,25 @@
-using DataFrames, DataFramesMeta, CSV, Dates, Arrow
+using Arrow, DataFrames, DataFramesMeta, Dates
 using ProgressMeter, Statistics
 if occursin("AICCA", pwd()) == false cd("AICCA") else end
 
 df = DataFrame()
-fl = filter( !contains(".DS"), readdir( joinpath(pwd(), "data/raw/combined/") ) )
-for file in fl append!( df, DataFrame( Arrow.Table( joinpath( pwd(),"data/raw/combined/",file ) ) ) ) end
+fl = filter( !contains(".DS"), readdir( joinpath(pwd(), "data/raw/yearly/") ) )
+@showprogress for file in fl append!( df, DataFrame( Arrow.Table( joinpath( pwd(),"data/raw/yearly/", file ) ) ) ) end
 
-@select! df :Label :Timestamp :lat :lon :platform :Cloud_Optical_Thickness_mean :Cloud_Phase_Infrared_liquid :Cloud_Phase_Infrared_ice :Cloud_Top_Pressure_mean :Cloud_Effective_Radius_mean :Cloud_Fraction :Cloud_Water_Path_mean :Cloud_Emissivity_mean :Cloud_Multi_Layer_Fraction
+df.Timestamp = DateTime.(df.Timestamp, "yyyy-mm-dd HH:MM:SS")
+@transform! df :date = Date.(:Timestamp) :hour=Hour.(:Timestamp)
+@select! df :Label :date :hour :lat :lon :platform :Cloud_Optical_Thickness_mean :Cloud_Phase_Infrared_liquid :Cloud_Phase_Infrared_ice :Cloud_Top_Pressure_mean :Cloud_Effective_Radius_mean :Cloud_Fraction :Cloud_Water_Path_mean :Cloud_Emissivity_mean :Cloud_Multi_Layer_Fraction
 dropmissing!(df, [:Label, :lat, :lon] )
-df.lon = convert.( Float16, floor.(df.lon) .+ 0.5 )
-df.lat = convert.( Float16, floor.(df.lat) .+ 0.5 )
 Arrow.write( joinpath(pwd(),"data/raw/all_AICCA.arrow"), df )
 
-
+df.lon = convert.( Float16, floor.(df.lon) .+ 0.5 )
+df.lat = convert.( Float16, floor.(df.lat) .+ 0.5 )
+@select! df :Label :date :hour :lat :lon
+Arrow.write( joinpath(pwd(),"data/raw/all_AICCA_no_properties.arrow"), df )
 
 ########################################  process data to mean class properties ############################################ 
-medm(x)  = median(   skipmissing(x) )
-meanm(x) = mean(     skipmissing(x) )
+medm(x)  = median( skipmissing(x) )
+meanm(x) = mean( skipmissing(x) )
 m75(x)   = quantile( skipmissing(x), 0.25 )
 m25(x)   = quantile( skipmissing(x), 0.75 )
 
@@ -33,3 +36,15 @@ df = @by( df, [:Label, :year],
 Arrow.write( joinpath(pwd(),"data/processed/mean_class_props.arrow"), df )
 df = nothing
 
+
+
+
+df = CSV.read( "./carly_cloud/allDat-20221024.csv", DataFrame )
+df2 = CSV.read( "./carly_cloud/all_ACCLIP.csv", DataFrame )
+rename!(df2, :UTC_Seconds => :T_UTC)
+df.T_UTC = round.( df.T_UTC, digits=-1 )
+df.T_UTC = convert.( Int64, df.T_UTC )
+df2.T_UTC = convert.( Int64, df2.T_UTC )
+
+leftjoin!(df, df2, on = [:YEAR,:MONTH,:DAY,:T_UTC])
+CSV.write( "./carly_cloud/allDat_and_ACCLIP.csv" , df, index = false)
