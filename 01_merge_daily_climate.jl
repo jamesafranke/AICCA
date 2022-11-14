@@ -1,4 +1,4 @@
-using Arrow, DataFrames, DataFramesMeta, Dates, InlineStrings
+using Arrow, DataFrames, DataFramesMeta, Dates
 if occursin("AICCA", pwd()) == false cd("AICCA") else end
 
 function get_subtrop(dfin)
@@ -37,7 +37,6 @@ dft = DataFrame( Arrow.Table( joinpath(pwd(), "data/processed/imerg_daily_pr_tro
 dfp = get_subtrop(dft)
 leftjoin!( df, dfp, on = [:date, :lat, :lon] )
 
-
 Arrow.write(joinpath(pwd(),"data/processed/subtropic_sc_label_daily_clim.arrow"), df)
 
 
@@ -45,12 +44,7 @@ Arrow.write(joinpath(pwd(),"data/processed/subtropic_sc_label_daily_clim.arrow")
 
 
 
-
-df.date = InlineString15.( Dates.format.(df.date, "yyyy-mm-dd") )
-df.lat = InlineString7.(string.(df.lat))
-df.lon = InlineString7.(string.(df.lon))
-
-
-dfl.date = InlineString15.( Dates.format.(dfl.date, "yyyy-mm-dd") )
-dfl.lat = InlineString7.( string.(dfl.lat) )
-dfl.lon = InlineString7.( string.(dfl.lon) )
+#using InlineStrings
+#df.date = InlineString15.( Dates.format.(df.date, "yyyy-mm-dd") )
+#df.lat = InlineString7.(string.(df.lat))
+#df.lon = InlineString7.(string.(df.lon))
