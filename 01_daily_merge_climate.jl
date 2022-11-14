@@ -9,35 +9,38 @@ for i in fl append!( df, CSV.read( joinpath(path, i), dateformat="yyyy-mm-dd HH:
 df.lat = floor.(df.lat) .+ 0.5
 df.lon = floor.(df.lon) .+ 0.5
 @select! df :Timestamp :lat :lon :Label :platform
-@transform! df :year=Year.(:Timestamp) :day=Dayofyear.(:Timestamp)
+@transform! df :date=Date.(:Timestamp)
 
 ## lower tropospheric stability from ERA5 (700hpa potential temp - 1000hpa potential temp) ##
-dfl = CSV.read( joinpath(pwd(),"data/processed/era5_lts.csv"), dateformat="yyyy-mm-ddTHH:MM:SS.s", DataFrame ) 
-@transform! dfl :year=Year.(:time) :day=Dayofyear.(:time)
-@select! dfl :year :day :lat :lon :lts
+dfl = CSV.read( joinpath(pwd(),"data/processed/era5_daily_lts.csv"), dateformat="yyyy-mm-ddTHH:MM:SS.s", DataFrame ) 
+@transform! dfl :date=Date.(:time)
+@select! dfl :date :lat :lon :lts
 dftemp = @subset dfl :lon.>180
 dftemp.lon .-= 360
 @subset! dfl :lon.<180
 append!( dfl, dftemp )
+dftemp = nothing
+leftjoin!( df, dfl, on = [:date, :lat, :lon] ) 
+dfl = nothing
 
-## Monthly boundary layer height from ERA5 ##
-dfb = CSV.read( joinpath(pwd(),"data/processed/era5_blh.csv"), dateformat="yyyy-mm-ddTHH:MM:SS.s", DataFrame ) 
-@transform! dfb :year=Year.(:time) :day=Dayofyear.(:time)
-@select! dfb :year :day :lat :lon :blh
+## boundary layer height from ERA5 ##
+dfb = CSV.read( joinpath(pwd(),"data/processed/era5_daily_blh.csv"), dateformat="yyyy-mm-ddTHH:MM:SS.s", DataFrame ) 
+@transform! dfb :date=Date.(:time)
+@select! dfb :date :lat :lon :blh
 dftemp = @subset dfb :lon.>180
 dftemp.lon .-= 360
 @subset! dfb :lon.<180
 append!( dfb, dftemp )
+dftemp = nothing
+leftjoin!( df, dfb, on = [:date, :lat, :lon] ) 
+dfl = nothing
 
-## Monthly AOT from AHVRR satellite ##
+## AOT from AHVRR satellite ##
 #dfa = CSV.read( joinpath(pwd(),"data/processed/avhrr_aot.csv"), dateformat="yyyy-mm-ddTHH:MM:SS.s", DataFrame )
-#@transform! dfa :year=Year.(:time) :day=Dayofyear.(:time)
-#@select! dfa :year :day :lat :lon :aot1
-
-## join em all up by location, month, and year ##
-leftjoin!( df, dfl, on = [:year, :day, :lat, :lon] )
-leftjoin!( df, dfb, on = [:year, :day, :lat, :lon] )
+#@transform! dfa :date=Date.(:time)
+#@select! dfa :date :lat :lon :aot1
 #leftjoin!( df, dfa, on = [:year, :day, :lat, :lon] )
+#dfa = nothing
 
 ## write dataframe with lable, sst, aot, and w to csv ##
 @select! df :Timestamp :lat :lon :Label :platform :lts :blh :aot1 
