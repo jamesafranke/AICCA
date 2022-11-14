@@ -1,24 +1,26 @@
-using DataFrames, DataFramesMeta, CSV, Dates
+using DataFrames, DataFramesMeta, CSV, Dates, Arrow
 using ProgressMeter, Statistics
 if occursin("AICCA", pwd()) == false cd("AICCA") else end
 
-
-########################################  process data to subtropic only ################################################# 
-for year in 2000:2021
+########################################  process data to arrow [depreciated] ################################################# 
+for year in 2012:2021
     df = DataFrame()
     fl = filter( !contains(".DS"), readdir( joinpath(pwd(), "data/raw/$year/") ) )
     @showprogress for file in fl
-        temp = CSV.read( joinpath(pwd(), "data/raw/$year/", file), DataFrame ) #dateformat="yyyy-mm-ddTHH:MM:SS.s",
-        @subset! temp :lat.>-40 :lat.<40
-        append!( df, temp )
+        append!( df, CSV.read( joinpath(pwd(), "data/raw/$year/", file), DataFrame ) ) 
+        try
+            df.lat = allowmissing(df.lat)
+            df.lon = allowmissing(df.lon)
+        catch e
+        end
     end
     for col in eachcol(df) replace!( col, NaN => missing ) end
     @transform! df @byrow :Timestamp=:Timestamp[1:19]
-    CSV.write( joinpath(pwd(),"data/processed/subtropic/$(year)_40NS.csv"), df )
-    df = nothing
+    Arrow.write( joinpath(pwd(),"data/raw/combined/$(year).arrow"), df )
 end
 
-########################################  process data to mean class properties ############################################ 
+
+########################################  process data to mean class properties [old] ############################################ 
 medm(x)  = median(   skipmissing(x) )
 meanm(x) = mean(     skipmissing(x) )
 m75(x)   = quantile( skipmissing(x), 0.25 )
