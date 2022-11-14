@@ -2,11 +2,7 @@ using Arrow, DataFrames, DataFramesMeta, Dates
 if occursin("AICCA", pwd()) == false cd("AICCA") else end
 
 ## Load in the class data  merge with some climate vars for analysis ##
-df = DataFrame( Arrow.Table(joinpath(pwd(),"data/raw/all_AICCA.arrow")))
-df.lon = convert.( Float16, floor.(df.lon) .+ 0.5 )
-df.lat = convert.( Float16, floor.(df.lat) .+ 0.5 )
-@select! df :Timestamp :lat :lon :Label
-@transform! df :date=Date.(:Timestamp)
+df = DataFrame( Arrow.Table(joinpath(pwd(),"data/raw/all_AICCA_no_properties.arrow")) )
 @subset! df :Label.!=43 
 
 dft = DataFrame()
@@ -28,7 +24,6 @@ dfp = DataFrame(Arrow.Table(joinpath(pwd(),"data/processed/imerg_daily_pr_tropic
 leftjoin!( dft, dfp, on = [:date, :lat, :lon] )
 
 dfa = DataFrame(Arrow.Table(joinpath(pwd(),"data/processed/aot_daily_tropics.arrow")))
-@transform! dfa :date=Date.(:time)
 leftjoin!( dft, dfa, on = [:date, :lat, :lon] )
 
 @select! dft :Timestamp :lat :lon :Label :lts :blh :aot1 

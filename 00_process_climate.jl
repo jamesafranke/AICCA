@@ -54,6 +54,8 @@ append!(df1, CSV.read( joinpath(pwd(),"data/processed/2021_avhrr_aot.csv"), date
 df1.lat = convert.( Float16, df1.lat )
 df1.lon = convert.( Float16, df1.lon )
 df1.aot1 = convert.( Float16, df1.aot1 )
+@transform! df1 :date=Date.(:time)
+@select! df1 :date :lat :lon :aot1
 Arrow.write(joinpath(pwd(),"data/processed/aot_daily_arrow"), df1)
 
 

@@ -30,6 +30,12 @@ colorclass = [25, 6, 27, 8, 40, 30, 32, 33, 36, 35]
 otherclass = [1,2,3,4,5,7,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,26,28,29,31,34,37,38,39,41,42]
 colors = cgrad(:Hiroshige, 10, categorical = true)
 
+colorclass = [25, 27, 8, 40, 30, 32, 33, 36, 35]
+otherclass = [1,2,3,4,5,6,7,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,26,28,29,31,34,37,38,39,41,42]
+colors = cgrad(:Monet, 9, categorical = true)
+
+:Demuth
+
 temp = @subset dfc :plotclass.==0
 scatter(temp.ltsbin, temp.blhbin, markershape = :square, markersize = 5, markeralpha = 1, markercolor = :lightgray, 
     markerstrokewidth = 0.75, markerstrokecolor=:lightgray, size=(500,550), grid = false, leg=false, dpi=800)
