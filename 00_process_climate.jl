@@ -1,3 +1,8 @@
+##############################################################
+### need to fix lat and lon in era5 data 0-360 -> -180-180 ###
+### and make date column for daily merge with classes      ###
+### these files were created from the raw ncs in python    ###
+##############################################################
 using Arrow, CSV, DataFrames, DataFramesMeta, Dates 
 if occursin("AICCA", pwd()) == false cd("AICCA") else end
 
@@ -29,7 +34,6 @@ append!( dfb, dftemp )
 dftemp = nothing
 Arrow.write(joinpath(pwd(),"data/processed/era5_daily_blh_tropics.arrow"), dfb)
 
-
 ## 925 hpa wind speed from ERA5 ##
 dfb = CSV.read( joinpath(pwd(),"data/processed/era5_ws.csv"), dateformat="yyyy-mm-ddTHH:MM:SS.s", DataFrame ) 
 @transform! dfb :date=Date.(:time)
@@ -45,12 +49,42 @@ append!( dfb, dftemp )
 dftemp = nothing
 Arrow.write(joinpath(pwd(),"data/processed/era5_daily_ws_tropics.arrow"), dfb)
 
+## 925 hpa temp and sepecifc humidity from  ERA5 ##
+dfs = DataFrame( Arrow.Table( joinpath( pwd(), "data/processed/era5_daily_temp_rh_925.arrow" ) ) )
+dfs.lon = convert.(Float16, dfs.lon)
+dfs.lat = convert.(Float16, dfs.lat)
+dfs.t = convert.(Float16, dfs.t)
+dfs.q = convert.(Float16, dfs.q)
+@transform! dfs :date=Date.(:time)
+@select! dfs :date :lat :lon :t :q
+dftemp = @subset dfs :lon.>180
+dftemp.lon .-= 360
+@subset! dfs :lon.<180
+append!( dfs, dftemp )
+dftemp = nothing
+Arrow.write( joinpath(pwd(),"data/processed/era5_daily_t_q.arrow"), dfs )
+
+## era5 sst ##
+dfs = DataFrame( Arrow.Table( joinpath( pwd(), "data/processed/era5_daily_sst.arrow" ) ) )
+dfs.lon = convert.(Float16, dfs.lon)
+dfs.lat = convert.(Float16, dfs.lat)
+dfs.sst = Array(dfs.sst)
+dfs.time = Array(dfs.time)
+dropmissing!(dfs, :sst )
+dfs.sst = convert.(Float16, dfs.sst)
+dftemp = @subset dfs :lon.>180
+dftemp.lon .-= 360
+@subset! dfs :lon.<180
+append!( dfs, dftemp )
+@transform! dfs :date=Date.(:time)
+@select! dfs :date :lat :lon :sst
+Arrow.write( joinpath(pwd(),"data/processed/era5_daily_sst3.arrow"), dfs )
 
 ## AOT from AHVRR satellite ##
-df1 = CSV.read( joinpath(pwd(),"data/processed/2002_avhrr_aot.csv"), dateformat="yyyy-mm-ddTHH:MM:SS.s", DataFrame )
-append!(df1, CSV.read( joinpath(pwd(),"data/processed/2009_avhrr_aot.csv"), dateformat="yyyy-mm-ddTHH:MM:SS.s", DataFrame ))
-append!(df1, CSV.read( joinpath(pwd(),"data/processed/2010_avhrr_aot.csv"), dateformat="yyyy-mm-ddTHH:MM:SS.s", DataFrame ))
-append!(df1, CSV.read( joinpath(pwd(),"data/processed/2021_avhrr_aot.csv"), dateformat="yyyy-mm-ddTHH:MM:SS.s", DataFrame ))
+df1 = CSV.read( joinpath( pwd(),    "data/processed/2002_avhrr_aot.csv"), dateformat="yyyy-mm-ddTHH:MM:SS.s", DataFrame )
+append!(df1, CSV.read( joinpath(pwd(), "data/processed/2009_avhrr_aot.csv"), dateformat="yyyy-mm-ddTHH:MM:SS.s", DataFrame ) )
+append!(df1, CSV.read( joinpath(pwd(), "data/processed/2010_avhrr_aot.csv"), dateformat="yyyy-mm-ddTHH:MM:SS.s", DataFrame ) )
+append!(df1, CSV.read( joinpath(pwd(), "data/processed/2021_avhrr_aot.csv"), dateformat="yyyy-mm-ddTHH:MM:SS.s", DataFrame ) )
 df1.lat = convert.( Float16, df1.lat )
 df1.lon = convert.( Float16, df1.lon )
 df1.aot1 = convert.( Float16, df1.aot1 )
@@ -59,3 +93,15 @@ df1.aot1 = convert.( Float16, df1.aot1 )
 @select! df1 :date :lat :lon :aot1
 df1 = @by df1 [:date, :lat, :lon] :aot =mean(:aot1)
 Arrow.write(joinpath(pwd(),"data/processed/aot_daily.arrow"), df1)
+
+### IMERG PR ###
+df = DataFrame()
+fl = filter( !contains(".DS"), readdir( joinpath(pwd(), "data/processed/pr/") ) )
+for file in fl append!( df, DataFrame( Arrow.Table( joinpath( pwd(),"data/processed/pr/", file ) ) ) ) end
+@transform! df :date=Date.(:time)
+@select! df :date :lat :lon :pr
+df.lat = convert.( Float16, df.lat )
+df.lon = convert.( Float16, df.lon )
+dropmissing!(df, :pr)
+df.pr = convert.( Float32, df.pr )
+Arrow.write(joinpath(pwd(),"data/processed/imerg_pr_daily.arrow"), df)
