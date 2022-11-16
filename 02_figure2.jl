@@ -99,100 +99,70 @@ png("./figures/heatmap_day_occurance.png")
 
 
 
-
-
 #############################
 ### for one location only ###
 #############################
 
-dfc = @chain df begin  
-    @subset :lat.==-35 :lon.<-127.5
-    dropmissing( [:lts, :blh] )
-    @transform :ltsbin=round.(:lts.*2, digits=0)./2 :blhbin=round.(:blh.*4, digits=-2) ./4
-    @by [:ltsbin, :blhbin, :Label] :counts=size(:lat)[1]
-    @orderby :counts rev=true
-    @aside dft = @subset _ :Label.!=0 
-    @aside dft = @by dft [:ltsbin, :blhbin] :nonzeroclass=last(:Label)
-    @by [:ltsbin, :blhbin] :maxclass=last(:Label) :maxcount=last(:counts) :total=sum(:counts)
-    leftjoin( dft, on=[:ltsbin, :blhbin] )
-    @rtransform :plotclass= :maxcount/:total>0.3 ? :maxclass : :nonzeroclass 
-    @subset :total.>10
-end
-
 colorclass = [25, 6, 27, 8, 40, 30, 32, 33, 36, 35]
 otherclass = [1,2,3,4,5,7,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,26,28,29,31,34,37,38,39,41,42]
-colors = cgrad(:Manet, 10, categorical = true);
-colors = cgrad(:roma, 10, categorical = true);
+colors = cgrad(:roma, 10, categorical = true)
 
-marksize = 3
+function plot_loc(lat, lon)
+    marksize = 4.1
+    temp = @subset dfc :plotclass.==0
+    scatter(temp.ltsbin, temp.blhbin, markershape = :square, markersize = marksize, markeralpha = 0.3, markercolor = :lightgray, 
+        markerstrokewidth = 0, markerstrokecolor=:lightgray, size=(500,600), grid = false, leg=false, dpi=900)
 
-for (i, class) in enumerate(colorclass)
-    temp = @subset dfc :plotclass.==class
-    if size(temp)[1] > 0
-        scatter!( temp.ltsbin, temp.blhbin, markershape = :square,
-        markersize = marksize, markeralpha = 1, markercolor = colors[i], 
-        markerstrokewidth = 0.05, markerstrokecolor=:lightgray)
+    for (i, class) in enumerate(colorclass)
+        temp = @subset dfc :plotclass.==class
+        if size(temp)[1] > 0
+            scatter!( temp.ltsbin, temp.blhbin, markershape = :square,
+            markersize = marksize, markeralpha = 0.3, markercolor = colors[i], 
+            markerstrokewidth = 0, markerstrokecolor=:black)
+        end
     end
-end
 
-temp = @rsubset dfc :plotclass in otherclass
-scatter!(temp.ltsbin, temp.blhbin, markershape = :square, markersize = marksize, markeralpha = 1, markercolor = :gray, 
-    markerstrokewidth = 0.05, markerstrokecolor=:gray )
+    temp = @rsubset dfc :plotclass in otherclass
+    scatter!(temp.ltsbin, temp.blhbin, markershape = :square, markersize = marksize, markeralpha = 0.3, markercolor = :gray, 
+        markerstrokewidth = 0, markerstrokecolor= :gray )
 
-xlims!(5.25, 36.25)
-ylims!(0, 2010)
-png("./figures/heatmap_day_one_loc.png")
-
-
-
-
-#########################################
-### heatmaps of the indivdual classes ###
-#########################################
-
-dfc = @chain df begin  
-    @subset :Label.!=0
-    dropmissing( [:lts, :blh] )
-    @transform :ltsbin=round.(:lts.*2, digits=0)./2 :blhbin=round.(:blh.*4, digits=-2) ./4
-    @by [:ltsbin, :blhbin, :Label] :counts=size(:lat)[1]
-    @transform :count_norm=:counts/ 4453
-end
-
-
-for (i, class) in enumerate(colorclass)
-    temp = @subset dfc :Label.==class
-    if size(temp)[1] > 0
-        scatter( temp.ltsbin, temp.blhbin, markershape = :square,
-        markersize = marksize, markeralpha = temp.count_norm, markercolor = colors[i], 
-        markerstrokewidth = 0.00,  size=(500,550), grid = false, leg=false, dpi=800)
-        xlims!(5.25, 36.25)
-        ylims!(0, 2010)
-        png("./figures/heatmap_$(class).png")
+    dft = @chain df begin  
+        @subset :lat.==lat :lon.==lon
+        dropmissing( [:lts, :blh] )
+        @transform :ltsbin=round.(:lts.*2, digits=0)./2 :blhbin=round.(:blh.*4, digits=-2) ./4
+        @by [:ltsbin, :blhbin, :Label] :counts=size(:lat)[1]
+        @orderby :counts rev=true
+        @aside dft = @subset _ :Label.!=0 
+        @aside dft = @by dft [:ltsbin, :blhbin] :nonzeroclass=last(:Label)
+        @by [:ltsbin, :blhbin] :maxclass=last(:Label) :maxcount=last(:counts) :total=sum(:counts)
+        leftjoin( dft, on=[:ltsbin, :blhbin] )
+        @rtransform :plotclass= :maxcount/:total>0.3 ? :maxclass : :nonzeroclass 
     end
+
+    temp = @rsubset dft :plotclass in otherclass
+    scatter!(temp.ltsbin, temp.blhbin, markershape = :circle, 
+        markersize = temp.total.*2, markeralpha = 0.5, markercolor = :gray, 
+        markerstrokewidth = 0.0, markerstrokecolor=:gray )
+
+    marksize = 4
+    for (i, class) in enumerate(colorclass)
+        temp = @subset dft :plotclass.==class
+        if size(temp)[1] > 0
+            scatter!( temp.ltsbin, temp.blhbin, markershape = :circle,
+            markersize = temp.total.*2, markeralpha = 0.8, markercolor = colors[i], 
+            markerstrokewidth = 0.0, markerstrokecolor=:black)
+        end
+    end
+
+    xlims!(5, 32.25)
+    ylims!(0, 2000)
+    png("./figures/heatmap_day_$(lat)_$(lon).png")
 end
 
+plot_loc(29.5,-125.5)
 
+plot_loc(-18.5, -80.5)
 
+plot_loc(-21.5, -88.5)
 
-
-
-temp = @subset dfc :Label.==35
-temp = @orderby temp :ltsbin
-temp = unstack(temp, :blhbin, :ltsbin, :counts)
-temp = @orderby temp :blhbin
-temp = Matrix(temp)
-contour(temp, levels =[1000,2000,3000])
-
-temp = @subset dfc :Label.==30
-temp = @orderby temp :ltsbin
-temp = unstack(temp, :blhbin, :ltsbin, :counts)
-temp = @orderby temp :blhbin
-temp = Matrix(temp)
-contour!(temp, levels =[1000,2000,3000],cmap=:viridis)
-
-temp = @subset dfc :Label.==32
-temp = @orderby temp :ltsbin
-temp = unstack(temp, :blhbin, :ltsbin, :counts)
-temp = @orderby temp :blhbin
-temp = Matrix(temp)
-contour!(temp, levels =[1000,2000,3000],cmap=:viridis)
+plot_loc(-13.5, 2.5)
