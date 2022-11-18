@@ -6,6 +6,22 @@
 using Arrow, CSV, DataFrames, DataFramesMeta, Dates 
 if occursin("AICCA", pwd()) == false cd("AICCA") else end
 
+
+## hourly boundary layer height or lts from ERA5 ##
+df = DataFrame()
+fl = filter( !contains(".DS"), readdir( joinpath(pwd(), "data/processed/blh/") ) )
+for file in fl append!( df, DataFrame( Arrow.Table( joinpath( pwd(),"data/processed/blh/", file ) ) ) ) end
+@transform! df :date=Date.(:time) :hour=Hour.(:time)
+@select! df :date :hour :lat :lon :blh
+df.blh = convert.( Float16, df.blh )
+for col in eachcol(df) replace!( col, NaN => missing ) end
+df = dropmissing(df)
+@rtransform :lon = :lon .> 180 ? :lon - 360 : :lon
+Arrow.write(joinpath(pwd(),"data/processed/era5_hourly_blh.arrow"), df)
+
+
+
+
 ## lower tropospheric stability from ERA5 (700hpa potential temp - 1000hpa potential temp) ##
 dfl = CSV.read( joinpath(pwd(),"data/processed/era5_daily_lts.csv"), dateformat="yyyy-mm-ddTHH:MM:SS.s", DataFrame ) 
 @transform! dfl :date=Date.(:time)
