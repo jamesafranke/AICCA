@@ -3,22 +3,40 @@
 ### and make date column for daily merge with classes      ###
 ### these files were created from the raw ncs in python    ###
 ##############################################################
-using Arrow, CSV, DataFrames, DataFramesMeta, Dates 
+using Arrow, CSV, DataFrames, DataFramesMeta, Dates, ProgressMeter
 if occursin("AICCA", pwd()) == false cd("AICCA") else end
 
-
 ## hourly boundary layer height or lts from ERA5 ##
-df = DataFrame()
-fl = filter( !contains(".DS"), readdir( joinpath(pwd(), "data/processed/blh/") ) )
-for file in fl append!( df, DataFrame( Arrow.Table( joinpath( pwd(),"data/processed/blh/", file ) ) ) ) end
-@transform! df :date=Date.(:time) :hour=Hour.(:time)
-@select! df :date :hour :lat :lon :blh
-df.blh = convert.( Float16, df.blh )
-for col in eachcol(df) replace!( col, NaN => missing ) end
-df = dropmissing(df)
-@rtransform :lon = :lon .> 180 ? :lon - 360 : :lon
-Arrow.write(joinpath(pwd(),"data/processed/era5_hourly_blh.arrow"), df)
+dfA =  DataFrame( Arrow.Table( joinpath(pwd(),"data/processed/subtropic_sc_label_daily_clim_all.arrow")) )
+@transform! dfA :year=Year.(:date)
 
+df = DataFrame()
+@showprogress for year in 2000:2021
+    dfi = DataFrame( Arrow.Table( joinpath( pwd(),"data/processed/blh/era5_$(year)_hourly_blh.arrow" ) ) )
+    @transform! dfi :date=Date.(:time) :hour=Hour.(:time)
+    @select! dfi :date :hour :lat :lon :blh
+    rename!(dfi, :blh => :blhh)
+    for col in eachcol(dfi) replace!( col, NaN => missing ) end
+    dropmissing!(dfi)
+
+    dfl = DataFrame( Arrow.Table( joinpath( pwd(),"data/processed/lts/era5_$(year)_hourly_lts.arrow" ) ) )
+    @transform! dfl :date=Date.(:time) :hour=Hour.(:time)
+    @select! dfl :date :hour :lat :lon :lts
+    rename!(dfl, :lts => :ltsh)
+    for col in eachcol(dfl) replace!( col, NaN => missing ) end
+    dropmissing!(dfl)
+
+    dftemp = @subset dfA :year .== Year(year)
+    leftjoin!(dftemp, dfi, on = [:date, :hour, :lat, :lon] ) 
+    leftjoin!(dftemp, dfl, on = [:date, :hour, :lat, :lon] ) 
+    append!(df, dftemp )
+
+    dftemp = nothing
+    dfi = nothing
+    dfl = nothing
+end
+
+Arrow.write(joinpath(pwd(),"data/processed/subtropic_sc_label_hourly_clim.arrow"), df)
 
 
 
@@ -29,11 +47,7 @@ dfl = CSV.read( joinpath(pwd(),"data/processed/era5_daily_lts.csv"), dateformat=
 dfl.lon = convert.( Float16, dfl.lon )
 dfl.lat = convert.( Float16, dfl.lat )
 dfl.lts =convert.( Float16, dfl.lts )
-dftemp = @subset dfl :lon.>180
-dftemp.lon .-= 360
-@subset! dfl :lon.<180
-append!( dfl, dftemp )
-dftemp = nothing
+@rtransform! dfl :lon = :lon .> 180 ? :lon .- 360 : :lon
 Arrow.write(joinpath(pwd(),"data/processed/era5_daily_lts_tropics.arrow"), dfl)
 
 ## boundary layer height from ERA5 ##
