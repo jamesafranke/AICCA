@@ -555,3 +555,4 @@ total = size(@subset df :Label.==class)[1]
 temp = @subset dfc :plotclass.==class
 inregion = sum(temp.maxcount)
 print( class,"___", inregion/total * 100)
+ 

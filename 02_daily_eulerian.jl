@@ -5,20 +5,38 @@ if occursin("AICCA", pwd()) == false cd("AICCA") else end
 
 # load in class data for the tropics merged with climate vars
 df = DataFrame( Arrow.Table("./data/processed/subtropic_sc_w_ctp_and_frac_daily_clim.arrow"))
-@subset! df :Label.!=43 
+rename!(df, :Cloud_Optical_Thickness_mean => :cop, :Cloud_Top_Pressure_mean => :ctp, :Cloud_Fraction => :cf)
+
 
 # get the sub-daily transisions
 dft = @chain df begin
-    @select :Timestamp :lat :lon :Label
-    @transform :day=Date.(:Timestamp)
-    @by [:lat, :lon, :day] :class=first(:Label) :nextclass=last(:Label) :day_num=size(:Label)[1] :hour_diff=Dates.value.(:Timestamp[end]-:Timestamp[1])./3_600_000
+    @select :date :hour :lat :lon :Label
+    @orderby [:date, :hour]
+    @by [:lat, :lon, :date] :class=first(:Label) :nextclass=last(:Label) :day_num=size(:Label)[1] :hour_diff=last(:hour)-last(:hour)
     @subset :day_num.>1
-    @rsubset :class.!=0 || :nextclass.!=0
+    #@rsubset :class.!=0 || :nextclass.!=0
 end
 
 
-
-
+ci = @subset df :cop.>0   :cop>2.6 :ctp.>440  :ctp.<50
+@transform! ci  :isccp="ci"
+cs = @subset df :cop.>3.6 :cop>23  :ctp.>440  :ctp.<50 
+@transform! cs  :isccp="cs"
+dc = @subset df :cop.>23  :cop>379 :ctp.>440  :ctp.<50
+@transform! dc  :isccp="dc"
+ac = @subset df :cop.>0   :cop>2.6 :ctp.>680  :ctp.<440
+@transform! ac  :isccp="ac"
+as = @subset df :cop.>3.6 :cop>23  :ctp.>680  :ctp.<440
+@transform! as  :isccp="as"
+ns = @subset df :cop.>23  :cop>379 :ctp.>680  :ctp.<440
+@transform! ns  :isccp="ns"
+c = @subset df  :cop.>0    :cop>2.6 :ctp.>1000 :ctp.<680 
+@transform! c   :isccp="c"
+sc = @subset df :cop.>3.6 :cop>23  :ctp.>1000 :ctp.<680 
+@transform! sc  :isccp="sc"
+s = @subset df  :cop.>23   :cop>379 :ctp.>1000 :ctp.<680 
+@transform! s   :isccp="s"
+df = vcat( (ci,cs,dc,ac,as,ns,c,sc,s) )
 
 
 # plot some class transisons 
