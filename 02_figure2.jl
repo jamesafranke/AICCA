@@ -305,7 +305,6 @@ scatter!(temp.xbin, temp.ybin, markershape = :square, markersize = marksize, mar
 png("./figures/heatmap_day_t_q.png")
 
 
-
 ##########################################
 ### check other driver dimesions w sst ###
 ##########################################
@@ -349,3 +348,7 @@ scatter!(temp.xbin, temp.ybin, markershape = :square, markersize = marksize, mar
 #xlims!(250, 280)
 #ylims!(0, )
 png("./figures/heatmap_day_w_sst.png")
+
+
+
+#### DAILY 

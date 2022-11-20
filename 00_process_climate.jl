@@ -1,8 +1,8 @@
-##############################################################
-### need to fix lat and lon in era5 data 0-360 -> -180-180 ###
-### and make date column for daily merge with classes      ###
-### these files were created from the raw ncs in python    ###
-##############################################################
+###################################################################
+### need to fix lat and lon in some era5 data 0-360 -> -180-180 ###
+### and make date column for daily merge with classes           ###
+### these files were created from the raw ncs in python         ###
+###################################################################
 using Arrow, CSV, DataFrames, DataFramesMeta, Dates, ProgressMeter
 if occursin("AICCA", pwd()) == false cd("AICCA") else end
 
@@ -36,6 +36,7 @@ df = DataFrame()
     dfl = nothing
 end
 
+select!(df, Not([:year]))
 Arrow.write(joinpath(pwd(),"data/processed/subtropic_sc_label_hourly_clim.arrow"), df)
 
 
