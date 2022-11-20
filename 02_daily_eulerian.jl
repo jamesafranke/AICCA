@@ -1,10 +1,10 @@
 using Plots; gr(); Plots.theme(:default)
-using CSV, DataFrames, DataFramesMeta, Dates 
+using Arrow, DataFrames, DataFramesMeta, Dates 
 using Statistics
 if occursin("AICCA", pwd()) == false cd("AICCA") else end
 
 # load in class data for the tropics merged with climate vars
-df = CSV.read( joinpath(pwd(), "data/processed/all_subtropic_label_with_climate.csv"), dateformat="yyyy-mm-ddTHH:MM:SS.s", DataFrame )
+df = DataFrame( Arrow.Table("./data/processed/subtropic_sc_w_ctp_and_frac_daily_clim.arrow"))
 @subset! df :Label.!=43 
 
 # get the sub-daily transisions
@@ -15,6 +15,10 @@ dft = @chain df begin
     @subset :day_num.>1
     @rsubset :class.!=0 || :nextclass.!=0
 end
+
+
+
+
 
 
 # plot some class transisons 
