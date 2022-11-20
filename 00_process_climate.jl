@@ -6,40 +6,12 @@
 using Arrow, CSV, DataFrames, DataFramesMeta, Dates, ProgressMeter
 if occursin("AICCA", pwd()) == false cd("AICCA") else end
 
-## hourly boundary layer height or lts from ERA5 ##
-dfA =  DataFrame( Arrow.Table( joinpath(pwd(),"data/processed/subtropic_sc_label_daily_clim_all.arrow")) )
-@transform! dfA :year=Year.(:date)
-
-df = DataFrame()
-@showprogress for year in 2000:2021
-    dfi = DataFrame( Arrow.Table( joinpath( pwd(),"data/processed/blh/era5_$(year)_hourly_blh.arrow" ) ) )
-    @transform! dfi :date=Date.(:time) :hour=Hour.(:time)
-    @select! dfi :date :hour :lat :lon :blh
-    rename!(dfi, :blh => :blhh)
-    for col in eachcol(dfi) replace!( col, NaN => missing ) end
-    dropmissing!(dfi)
-
-    dfl = DataFrame( Arrow.Table( joinpath( pwd(),"data/processed/lts/era5_$(year)_hourly_lts.arrow" ) ) )
-    @transform! dfl :date=Date.(:time) :hour=Hour.(:time)
-    @select! dfl :date :hour :lat :lon :lts
-    rename!(dfl, :lts => :ltsh)
-    for col in eachcol(dfl) replace!( col, NaN => missing ) end
-    dropmissing!(dfl)
-
-    dftemp = @subset dfA :year .== Year(year)
-    leftjoin!(dftemp, dfi, on = [:date, :hour, :lat, :lon] ) 
-    leftjoin!(dftemp, dfl, on = [:date, :hour, :lat, :lon] ) 
-    append!(df, dftemp )
-
-    dftemp = nothing
-    dfi = nothing
-    dfl = nothing
-end
-
-select!(df, Not([:year]))
-Arrow.write(joinpath(pwd(),"data/processed/subtropic_sc_label_hourly_clim.arrow"), df)
-
-
+## subsidence from ERA5 ##
+df = CSV.read( joinpath(pwd(),"data/processed/era5_w.csv"), dateformat="yyyy-mm-ddTHH:MM:SS.s", DataFrame ) 
+@transform! df :date=Date.(:time)
+@select! df :date :lat :lon :w
+@rtransform! df :lon = :lon .> 180 ? :lon .- 360 : :lon
+Arrow.write(joinpath(pwd(),"data/processed/era5_w.arrow"), df)
 
 ## lower tropospheric stability from ERA5 (700hpa potential temp - 1000hpa potential temp) ##
 dfl = CSV.read( joinpath(pwd(),"data/processed/era5_daily_lts.csv"), dateformat="yyyy-mm-ddTHH:MM:SS.s", DataFrame ) 
@@ -58,11 +30,7 @@ dfb = CSV.read( joinpath(pwd(),"data/processed/era5_daily_blh.csv"), dateformat=
 dfb.lon = convert.( Float16, dfb.lon )
 dfb.lat = convert.( Float16, dfb.lat )
 dfb.blh = convert.( Float16, dfb.blh )
-dftemp = @subset dfb :lon.>180
-dftemp.lon .-= 360
-@subset! dfb :lon.<180
-append!( dfb, dftemp )
-dftemp = nothing
+@rtransform! dfb:lon = :lon .> 180 ? :lon .- 360 : :lon
 Arrow.write(joinpath(pwd(),"data/processed/era5_daily_blh_tropics.arrow"), dfb)
 
 ## 925 hpa wind speed from ERA5 ##
@@ -73,11 +41,7 @@ dfb.lon = convert.( Float16, dfb.lon )
 dfb.lat = convert.( Float16, dfb.lat )
 dfb.u = convert.( Float16, dfb.u )
 dfb.v = convert.( Float16, dfb.v )
-dftemp = @subset dfb :lon.>180
-dftemp.lon .-= 360
-@subset! dfb :lon.<180
-append!( dfb, dftemp )
-dftemp = nothing
+@rtransform! dfb :lon = :lon .> 180 ? :lon .- 360 : :lon
 Arrow.write(joinpath(pwd(),"data/processed/era5_daily_ws_tropics.arrow"), dfb)
 
 ## 925 hpa temp and sepecifc humidity from  ERA5 ##
@@ -88,11 +52,7 @@ dfs.t = convert.(Float16, dfs.t)
 dfs.q = convert.(Float16, dfs.q)
 @transform! dfs :date=Date.(:time)
 @select! dfs :date :lat :lon :t :q
-dftemp = @subset dfs :lon.>180
-dftemp.lon .-= 360
-@subset! dfs :lon.<180
-append!( dfs, dftemp )
-dftemp = nothing
+@rtransform! dfs :lon = :lon .> 180 ? :lon .- 360 : :lon
 Arrow.write( joinpath(pwd(),"data/processed/era5_daily_t_q.arrow"), dfs )
 
 ## era5 sst ##
@@ -103,10 +63,7 @@ dfs.sst = Array(dfs.sst)
 dfs.time = Array(dfs.time)
 dropmissing!(dfs, :sst )
 dfs.sst = convert.(Float16, dfs.sst)
-dftemp = @subset dfs :lon.>180
-dftemp.lon .-= 360
-@subset! dfs :lon.<180
-append!( dfs, dftemp )
+@rtransform! dfs :lon = :lon .> 180 ? :lon .- 360 : :lon
 @transform! dfs :date=Date.(:time)
 @select! dfs :date :lat :lon :sst
 Arrow.write( joinpath(pwd(),"data/processed/era5_daily_sst3.arrow"), dfs )
