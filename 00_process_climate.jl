@@ -7,11 +7,11 @@ using Arrow, CSV, DataFrames, DataFramesMeta, Dates, ProgressMeter
 if occursin("AICCA", pwd()) == false cd("AICCA") else end
 
 ## subsidence from ERA5 ##
-df = CSV.read( joinpath(pwd(),"data/processed/era5_w.csv"), dateformat="yyyy-mm-ddTHH:MM:SS.s", DataFrame ) 
+df = DataFrame( Arrow.Table("./data/processed/era5_w.arrow") )
 @transform! df :date=Date.(:time)
 @select! df :date :lat :lon :w
 @rtransform! df :lon = :lon .> 180 ? :lon .- 360 : :lon
-Arrow.write(joinpath(pwd(),"data/processed/era5_w.arrow"), df)
+Arrow.write("./data/processed/era5_w1.arrow", df)
 
 ## lower tropospheric stability from ERA5 (700hpa potential temp - 1000hpa potential temp) ##
 dfl = CSV.read( joinpath(pwd(),"data/processed/era5_daily_lts.csv"), dateformat="yyyy-mm-ddTHH:MM:SS.s", DataFrame ) 
