@@ -459,7 +459,6 @@ plot_loc_hour(-29.5,7.5)
 
 
 ### indivudial class plots
-
 df = DataFrame( Arrow.Table( joinpath(pwd(),"data/processed/subtropic_sc_label_hourly_clim.arrow")) )
 
 dfc = @chain df begin  
@@ -476,38 +475,46 @@ dfc = @chain df begin
     @subset :total.>100
 end
 
-
+all = @chain df begin  
+    @subset :Label .!= 0
+    dropmissing( [:ltsh, :blhh] )
+    @transform :ltsbin=round.(:ltsh.*2, digits=0)./2 :blhbin=round.(:blhh./3, digits=-1)*3
+    @by [:ltsbin, :blhbin] :allcounts=size(:lat)[1]
+end
 
 colorclass = [25, 6, 27, 8, 40, 36, 32, 33, 30, 35]
 colors = cgrad(:roma, 10, categorical = true)
 
 for (i, class) in enumerate(colorclass)
     marksize = 4.1
-    temp = @subset dfc :plotclass.==0
-    scatter(temp.ltsbin, temp.blhbin, markershape = :square, markersize = marksize, markeralpha = 0.3, markercolor = :lightgray, 
-        markerstrokewidth = 0, markerstrokecolor=:lightgray, size=(500,600), grid = false, leg=false, dpi=900)
 
-    temp = @rsubset dfc :plotclass.==class
-    scatter!(temp.ltsbin, temp.blhbin, markershape = :square, markersize = marksize, markeralpha = 0.3, markercolor = colors[i], 
-        markerstrokewidth = 0, markerstrokecolor=colors[i])
+    temp = @subset dfc :plotclass.==class
+    scatter(temp.ltsbin, temp.blhbin, markershape = :square, markersize = marksize, markeralpha = 0.3, markercolor = colors[i], 
+        markerstrokewidth = 0, markerstrokecolor=colors[i], size=(500,600), grid = false, leg=false, dpi=900)
 
     dft = @chain df begin  
         dropmissing( [:ltsh, :blhh] )
         @subset :Label.==class
         @transform :ltsbin=round.(:ltsh.*2, digits=0)./2 :blhbin=round.(:blhh./3, digits=-1)*3
         @by [:ltsbin, :blhbin, :Label] :counts=size(:lat)[1]
-        @orderby :counts rev=true
-        @by [:ltsbin, :blhbin] :maxcount=last(:counts)
+        @subset :counts.>10
     end
 
-    scatter!( dft.ltsbin, dft.blhbin, markershape = :circle, markersize = dft.maxcount./500, 
-    markeralpha = 0.7, markercolor = colors[i],  markerstrokewidth = 0, markerstrokecolor=:black)
+    leftjoin!(dft, all, on=[:ltsbin, :blhbin])
+    @transform! dft :fracbin=:counts./:allcounts
+
+
+    scatter!( dft.ltsbin, dft.blhbin, markershape = :circle, markersize = dft.fracbin.*15, 
+    markeralpha = 0.9, markercolor = colors[i],  markerstrokewidth = 0, markerstrokecolor=:black)
 
     xlims!(5, 32.25)
     ylims!(0, 2000)
     title!("class_$class")
-    png("./figures/heatmap_day_occurance_$(class).png")
+    png("./figures/heatmap_day_percentage_$(class).png")
 end
+
+
+
 
 
 dfc = @chain df begin  
@@ -517,6 +524,115 @@ dfc = @chain df begin
     @orderby :counts rev=true
     @aside dft = @subset _ :Label.!=0 
     @aside dft = @by dft [:ltsbin, :blhbin] :nonzeroclass=last(:Label)  :totalnozero=sum(:counts)
+    @by [:ltsbin, :blhbin] :maxclass=last(:Label) :maxcount=last(:counts) :total=sum(:counts)
+    leftjoin( dft, on=[:ltsbin, :blhbin] )
+    @rtransform :plotclass= :maxcount/:total>0.3 ? :maxclass : :nonzeroclass 
+    @transform :fracinbin=:maxcount./:totalnozero
+    @subset :total.>100
+end
+
+all = @chain df begin  
+    #@subset :Label .!= 0
+    dropmissing( [:ltsh, :blhh] )
+    @transform :ltsbin=round.(:ltsh.*2, digits=0)./2 :blhbin=round.(:blhh./3, digits=-1)*3
+    @by [:ltsbin, :blhbin] :allcounts=size(:lat)[1]
+end
+
+colorclass = [25, 6, 27, 8, 40, 36, 32, 33, 30, 35]
+colors = cgrad(:roma, 10, categorical = true)
+
+for (i, class) in enumerate(colorclass)
+    marksize = 4.1
+
+    temp = @subset dfc :plotclass.==0 
+    scatter(temp.ltsbin, temp.blhbin, markershape = :square, markersize = marksize, markeralpha = 0.3, markercolor = :lightgray, 
+        markerstrokewidth = 0, markerstrokecolor=:lightgray, size=(500,600), grid = false, leg=false, dpi=900)
+
+    for (itemp, classtemp) in enumerate(colorclass)
+        temp = @subset dfc :plotclass.==classtemp
+        scatter!(temp.ltsbin, temp.blhbin, markershape = :square, markersize = marksize, markeralpha = 0.3, markercolor = colors[itemp], 
+        markerstrokewidth = 0, markerstrokecolor=colors[itemp])
+    end
+
+    dft = @chain df begin  
+        dropmissing( [:ltsh, :blhh] )
+        @subset :Label.==class
+        @transform :ltsbin=round.(:ltsh.*2, digits=0)./2 :blhbin=round.(:blhh./3, digits=-1)*3
+        @by [:ltsbin, :blhbin, :Label] :counts=size(:lat)[1]
+        @subset :counts.>10
+    end
+
+    leftjoin!(dft, all, on=[:ltsbin, :blhbin])
+    @transform! dft :fracbin=:counts./:allcounts
+    #leftjoin!(dft, dfc, on=[:ltsbin, :blhbin])
+    #@subset! dft :plotclass .!= missing
+
+    scatter!( dft.ltsbin, dft.blhbin, markershape = :circle, markersize = dft.fracbin.*20, 
+    markeralpha = 0.9, markercolor = colors[i],  markerstrokewidth = 0, markerstrokecolor=:black)
+
+    xlims!(5, 32.25)
+    ylims!(0, 2000)
+    title!("class_$class")
+    png("./figures/heatmap_day_percentage_$(class)_with_cloudfree.png")
+end
+
+
+
+### indivudial class polot contour 
+
+all = @chain df begin  
+    #@subset :Label .!= 0
+    dropmissing( [:ltsh, :blhh] )
+    @transform :ltsbin=round.(:ltsh.*2, digits=0)./2 :blhbin=round.(:blhh./3, digits=-1)*3
+    @by [:ltsbin, :blhbin] :allcounts=size(:lat)[1]
+    @orderby :ltsbin
+end
+
+temp1 = unstack(all, :blhbin, :ltsbin, :allcounts)
+temp1 = @orderby temp1 :blhbin
+select!(temp1, Not(:blhbin))
+temp1 = Array(temp1)
+
+contour(levels = [100], color = :lightgray, size=(500,600), grid = false, leg=false, dpi=900)
+for (i, class) in enumerate(colorclass)
+    marksize = 4.1
+
+    dft = @chain df begin  
+        dropmissing( [:ltsh, :blhh] )
+        @subset :Label.==class
+        @transform :ltsbin=round.(:ltsh.*2, digits=0)./2 :blhbin=round.(:blhh./3, digits=-1)*3
+        @by [:ltsbin, :blhbin, :Label] :counts=size(:lat)[1]
+        @subset :counts.>10
+    end
+
+    leftjoin!(dft, all, on=[:ltsbin, :blhbin])
+    @transform! dft :fracbin=:counts./:allcounts
+
+    dft = @orderby dft :ltsbin
+    temp = unstack(dft, :blhbin, :ltsbin, :counts)
+    temp = @orderby temp :blhbin
+    select!(temp, Not(:blhbin))
+    temp = Array(temp)
+    
+    contour!(temp, levels = [2000], color = colors[i])
+
+end
+xlims!(5, 35)
+ylims!(0, 50)
+png("./figures/contour_counts.png")
+
+
+
+
+
+#### random calculation ###
+dfc = @chain df begin  
+    dropmissing( [:ltsh, :blhh] )
+    @transform :ltsbin=round.(:ltsh.*2, digits=0)./2 :blhbin=round.(:blhh./3, digits=-1)*3
+    @by [:ltsbin, :blhbin, :Label] :counts=size(:lat)[1]
+    @orderby :counts rev=true
+    @aside dft = @subset _ :Label.!=0 
+    @aside dft = @by dft [:ltsbin, :blhbin] :nonzeroclass=last(:Label) :totalnozero=sum(:counts)
     @by [:ltsbin, :blhbin] :maxclass=last(:Label) :maxcount=last(:counts) :total=sum(:counts)
     leftjoin( dft, on=[:ltsbin, :blhbin] )
     @rtransform :plotclass= :maxcount/:total>0.3 ? :maxclass : :nonzeroclass 
