@@ -30,7 +30,7 @@ dfb = CSV.read( joinpath(pwd(),"data/processed/era5_daily_blh.csv"), dateformat=
 dfb.lon = convert.( Float16, dfb.lon )
 dfb.lat = convert.( Float16, dfb.lat )
 dfb.blh = convert.( Float16, dfb.blh )
-@rtransform! dfb:lon = :lon .> 180 ? :lon .- 360 : :lon
+@rtransform! dfb :lon = :lon .> 180 ? :lon .- 360 : :lon
 Arrow.write(joinpath(pwd(),"data/processed/era5_daily_blh_tropics.arrow"), dfb)
 
 ## 925 hpa wind speed from ERA5 ##
