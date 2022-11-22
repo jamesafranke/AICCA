@@ -14,7 +14,6 @@ df = @by df :Label :ot=meanm(:ot) :tp=meanm(:tp) :er =meanm(:er) :wp=meanm(:wp) 
 @subset! df :ot.<= 23 :ot.>=3.4 :tp.>680
 
 
-
 GLMakie.closeall()
 x = df.ot
 y = df.er

@@ -19,3 +19,37 @@ end
 df = get_subtrop(df)
 dropmissing!(df)
 
+dfc = @chain df begin
+    @transform :ltsbin=round.(:lts.*2, digits=0)./2 :blhbin=round.(:blh./3, digits=-1)*3
+    @by [:ltsbin, :blhbin] :mean_aot=mean(:aot1) :total=size(:aot1)[1]
+    @subset :total.>10
+    @orderby :ltsbin
+    unstack( :blhbin, :ltsbin, :mean_aot)
+    @orderby :blhbin 
+    select( Not(:blhbin) )
+    Array()
+end
+
+xlims!(0, 31)
+ylims!(0, 35)
+contourf(dfc, size=(600,600), grid = false, dpi=900, label = "mean aot")
+png("./figures/heatmap_aot.png")
+
+
+dfc = @chain df begin
+    @subset :aot1.> median(:aot1)
+    @transform :ltsbin=round.(:lts.*2, digits=0)./2 :blhbin=round.(:blh./3, digits=-1)*3
+    @by [:ltsbin, :blhbin] :counts=size(:aot1)[1]
+    @subset :counts.>10
+    @orderby :ltsbin
+    unstack( :blhbin, :ltsbin, :counts)
+    @orderby :blhbin 
+    select( Not(:blhbin) )
+    Array()
+end
+
+contourf(dfc, size=(600,600), grid = false, dpi=900, color = :viridis)
+
+xlims!(0, 31)
+ylims!(0, 35)
+png("./figures/heatmap_aot_high.png")
