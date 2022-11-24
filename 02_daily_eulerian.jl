@@ -11,7 +11,7 @@ rename!(df, :Cloud_Optical_Thickness_mean => :cop, :Cloud_Top_Pressure_mean => :
 dft = @chain df begin
     @select :date :hour :lat :lon :Label :blhh :ltsh
     @orderby :date :hour
-    @by [:lat, :lon, :date] :class=first(:Label) :nextclass=last(:Label) :day_num=size(:Label)[1] :hour_diff=last(:hour)-last(:hour) :blh1=first(:blhh) :blh2=last(:blhh) :lts1=first(:ltsh) :lts2=last(:ltsh)
+    @by [:lat, :lon, :date] :class=first(:Label) :nextclass=last(:Label) :day_num=size(:Label)[1] :hour_diff=Hour.(last(:hour)-first(:hour)) :blh1=first(:blhh) :blh2=last(:blhh) :lts1=first(:ltsh) :lts2=last(:ltsh)
     @subset :day_num.>1
     @subset :class .== 35
     #@rsubset :class.!=0 || :nextclass.!=0
@@ -31,11 +31,16 @@ df1 = @subset dft :nextclass.==33
 median(df1.lts1 .- df1.lts2)
 median(df1.blh1 .- df1.blh2)
 
-@subset df1 
+histogram(df1.lts1 .- df1.lts2)
 
 
+histogram(df1.blh1 .- df1.blh2)
 
-@subset dft :class .== 35
+df1 = @subset dft :nextclass.==25
+median(df1.lts1 .- df1.lts2)
+median(df1.blh1 .- df1.blh2)
+
+
 
 @orderby :date :hour
 @by [:lat, :lon] :aot=ffill(:aot1)
