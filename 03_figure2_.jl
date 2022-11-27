@@ -4,7 +4,7 @@ using Statistics
 if occursin("AICCA", pwd()) == false cd("AICCA") else end
 
 ### load in class data for the sub tropics merged with climate vars ###
-df = DataFrame( Arrow.Table( joinpath(pwd(),"data/processed/subtropic_sc_label_daily_clim_all.arrow")) )
+df = DataFrame( Arrow.Table( joinpath(pwd(),"./data/processed/subtropic_sc_label_hourly_clim.arrow")) )
 
 dfc = @chain df begin  
     dropmissing( [:lts, :blh] )
