@@ -4,9 +4,21 @@ if occursin("AICCA", pwd()) == false cd("AICCA") else end
 
 
 
+year = 2003
+df = DataFrame( Arrow.Table( "./data/raw/yearly/$(year).arrow" ) )
+@select! df :Timestamp :lat :lon :Label
+df.Timestamp = DateTime.(df.Timestamp, "yyyy-mm-dd HH:MM:SS")
+@transform! df :date = Date.(:Timestamp) :hour=Hour.(:Timestamp)
 
-df = DataFrame( Arrow.Table("./data/processed/subtropic_sc_label_hourly_clim.arrow") )
-rename!(df, :Cloud_Optical_Thickness_mean => :cop, :Cloud_Top_Pressure_mean => :ctp, :Cloud_Fraction => :cf)
+for col in eachcol(df) replace!( col, NaN => missing ) end
+@transform! df @byrow :Timestamp=:Timestamp[1:19]
+
+dfe = DataFrame( Arrow.Table( "./data/raw/era5/era5_$(year)_daily_blh.arrow" ) )
+dropmissing!(dfe)
+
+
+
+
 
 
 
