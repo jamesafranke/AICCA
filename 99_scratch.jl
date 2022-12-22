@@ -301,3 +301,34 @@ leftjoin!( df, dft, on = [:year, :month, :day, :lat, :lon] )
 rename!(df, :zmla=>:blh)
 dropmissing!(df)
 Arrow.write("./data/processed/HadGEM3-GC31-LL_1pct.arrow", df)
+
+
+
+for row in eachrow(dft)
+    #temp_era = @subset era :date.==row.date
+    lat = row.lat
+    lon = row.lon
+    time = row.Timestamp
+
+    for i in 1:48
+        ws = @chain era begin
+            @transform :euclid = sqrt.( (:lat.-lat).^2 + (:lon.-lon).^2 )
+            @orderby :euclid
+            first(1) 
+        end
+        
+        lon = lon .+ ws.u .* 3600.0./111319.488cos.(lat)
+        lat = lat .+ ws.v .* 3600.0./111319.488
+        time = time .+ Hour(1)
+
+        temp2 = @subset df :Timestamp.==time
+        if size(temp2)[1] > 0
+            @transform! temp2 :euclid = sqrt.( (:lat.-temp.lat).^2 + (:lon.-temp.lon).^2 )
+            @subset! temp2 :euclid.<0.7
+            if size(temp2)[1] > 0
+                append!(out, temp2.Label)
+                break 
+            end
+        end
+    end
+end 
