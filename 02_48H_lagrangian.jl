@@ -49,3 +49,11 @@ for year in 2000:2021 ### load in class data and wind speed from era5 and calc t
     end
     Arrow.write("./data/processed/transitions/$(year)_transitions_40NS.arrow", out)
 end
+
+
+
+df = DataFrame()
+for year in 2000:2021
+    append!( df, Arrow.Table( "./data/processed/transitions/$(year)_transitions_40NS.arrow"  ) )
+end
+Arrow.write( "./data/processed/transitions/all_transitions_40NS.arrow", df )
