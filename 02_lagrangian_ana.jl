@@ -2,6 +2,7 @@ using Arrow, DataFrames, DataFramesMeta, Dates, ProgressMeter
 using Plots; gr(); Plots.theme(:default)
 if occursin("AICCA", pwd()) == false cd("AICCA") else end
 
+
 function get_subtrop(dfin) ### subtropical regions with large sc decks ###
     dfout = DataFrame()
     append!( dfout, @subset dfin :lat.>7   :lat.<39 :lon.>-165 :lon.<-100 ) # north pacific
@@ -12,8 +13,8 @@ end
 
 df = DataFrame( Arrow.Table( "./data/processed/transitions/all_transitions_40NS.arrow" ) )
 
-df
+df = 
 
 temp = @subset df :Label.==35
 
-histogram(temp.next_label)
+histogram( temp.next_label )
