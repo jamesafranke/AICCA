@@ -11,21 +11,17 @@ function get_subtrop(dfin) ### subtropical regions with large sc decks ###
     return dfout
 end
 
-
 df = DataFrame( Arrow.Table( "./data/processed/transitions/all_transitions_40NS.arrow" ) )
-
-
 
 temp = @chain df begin
     @orderby :time_0 
-    @by [:time_0, :Label] :class=first(:next_label)
+    @by [:time_0, :lat, :lon] :first=first(:next_label) :class=first(:next_label) :hours=first(:hours)
 end
-
 
 
 temp1 = @subset temp :Label.==35
 histogram( temp1.class )
 
-temp1 = @by temp1 :class :mean_time = mean(:hours)
+temp1 = @by temp1 :class :mean_time = median(:hours)
 
-mean?
+scatter(temp1.class, temp1.mean_time)
