@@ -13,24 +13,24 @@ end
 
 # string together transitions 
 df = @chain DataFrame( Arrow.Table( "./data/processed/transitions/all_transitions_40NS.arrow" ) ) begin
-    get_subtrop()
+    @subset :lat.>-39 :lat.<3  :lon.>-120 :lon.<-70 
     @orderby :time_0 
     @by [:time_0, :lat, :lon] :date=first(:date) :time=first(Hour.(:Timestamp)) :class1=first(:Label) :class2=first(:next_label) :delta1=first(:hours) :latf=first(:latf) :lonf=first(:lonf)
 end
 
 df2 = @chain df begin
-    @select :time_0 :date :time :class1 :class2 :delta1 :latf :lonf  
-    rename(:latf=>:lat, :lonf=>:lon)
-    @transform :date_0=Date.(:time_0) :hour_0=Hour.(:time_0)
+    @transform :date=Date.(:time_0) :time=Hour.(:time_0)
+    @select :date :time :class2 :latf :lonf  
+    rename(:latf=>:lat, :lonf=>:lon, :class1=>:class2a, :class2=>:class3, :delta1=>:delta2)
+    @select :lat :lon :date :time :class2a :class3 :delta2
 end
 
+df2 = leftjoin(df, df2, on=[:lat, :lon, :date, :time] )
 
 
+@transform! df :ID=:Row
 
-
-
-
-
+dropmissing!(df2)
 
 
 
@@ -50,6 +50,8 @@ temp2 = @by temp1 :next :mean_time=mean(:hours)
 scatter(temp2.next, temp2.mean_time)
 
 
+
+@subset df :time_0 = Datetime
 
 
 
