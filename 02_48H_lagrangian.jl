@@ -13,29 +13,29 @@ for year in 2000:2021 ### load in class data and wind speed from era5 and calc t
         @transform :Timestamp=DateTime.(:Timestamp, "yyyy-mm-dd HH:MM:SS") 
         @transform :time_0=:Timestamp
         @transform :Timestamp=round.(:Timestamp, Hour(1))
-        @transform :date = Date.(:Timestamp) end
+        @transform :date=Date.(:Timestamp) end
 
     era = @chain DataFrame( Arrow.Table( "./data/raw/era5/era5_$(year)_daily_ws.arrow" ) ) begin
         @subset :lat.<40 :lat.>-40
-        @rtransform :lon = :lon .> 180 ? :lon .- 360 : :lon 
-        @transform :date = Date.(:time)
+        @rtransform :lon=:lon.>180 ? :lon.-360 : :lon 
+        @transform :date=Date.(:time)
         @select :date :lat :lon :u :v
-        rename( :lat=>:latr, :lon=>:lonr) end
+        rename( :lat=>:latr, :lon=>:lonr ) end
 
     @showprogress for date in unique(era.date)
         erat = @subset era :date.<=date.+Day(2) :date.>=date
         dft = @subset df :date.==date
         future = @chain df begin
         @subset :date.<=date.+Day(2) :date.>=date
-        @transform :latr = round.(Int, :lat) :lonr = round.(Int, :lon)
+        @transform :latr=round.(Int, :lat) :lonr=round.(Int, :lon)
         @select :Timestamp :lat :lon :latr :lonr :Label
         rename( :Label=>:next_label, :lat=>:latf, :lon=>:lonf) end
 
         for i in 1:48
             dft = @chain dft begin
-            @transform :latr = round_step.(:lat, 0.25) :lonr = round_step.(:lon, 0.25)
-            @rtransform :latr = :latr .== -0.0 ? 0.0 : :latr :lonr = :lonr .== -0.0 ? 0.0 : :lonr
-            innerjoin(erat, on = [:date, :latr, :lonr])
+            @transform :latr=round_step.(:lat, 0.25) :lonr=round_step.(:lon, 0.25)
+            @rtransform :latr=:latr.==-0.0 ? 0.0 : :latr :lonr=:lonr.==-0.0 ? 0.0 : :lonr
+            innerjoin( erat, on = [:date, :latr, :lonr] )
             @transform :lon=:lon.+:u.*3600.0./111319.488cos.(:lat) :lat=:lat.+:v.*3600.0./111319.488 :Timestamp=:Timestamp.+Hour(1)
             @select :time_0 :Timestamp :lat :lon :Label
             @transform :latr=round.(Int, :lat) :lonr=round.(Int,:lon) :date=Date.(:Timestamp) end
