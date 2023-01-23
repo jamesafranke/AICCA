@@ -12,11 +12,37 @@ function get_subtrop(dfin) ### subtropical regions with large sc decks ###
 end
 
 # string together transitions 
-df = @chain DataFrame( Arrow.Table( "./data/processed/transitions/all_transitions_40NS.arrow" ) ) begin
-    @subset :lat.>-39 :lat.<3  :lon.>-120 :lon.<-70 
-    @orderby :time_0 
-    @by [:time_0, :lat, :lon] :date=first(:date) :time=first(Hour.(:Timestamp)) :class1=first(:Label) :class2=first(:next_label) :delta1=first(:hours) :latf=first(:latf) :lonf=first(:lonf)
-end
+df = DataFrame( Arrow.Table( "./data/processed/transitions/all_transitions_SP.arrow" ) )
+df = @orderby df :time_0 
+df = @by df [:time_0, :lat, :lon] :class1=first(:Label) :delta1=first(:hours) :id=first(:id) :id2=first(:next_id)
+
+df2 = @select df :time_0 :lat :lon :class1 :delta1 :id :id2
+rename!(df2, :time_0=>:time2, :lat=>:lat2, :lon=>:lon2, :id=>:id2, :class1=>:class2, :delta1=>:delta2, :id2=>:id3)
+dfout = leftjoin(df, df2, on =:id2)
+replace!(dfout.id3, missing=>-999)
+
+df2 = @select df :time_0 :lat :lon :class1 :delta1 :id :id2
+rename!(df2, :time_0=>:time3, :lat=>:lat3, :lon=>:lon3, :id=>:id3, :class1=>:class3, :delta1=>:delta3, :id2=>:id4)
+dfout = leftjoin(dfout, df2, on =:id3)
+replace!(dfout.id4, missing=>-999)
+
+df2 =  @select df :time_0 :lat :lon :class1 :delta1 :id :id2
+rename!(df2, :time_0=>:time4, :lat=>:lat4, :lon=>:lon4, :id=>:id4, :class1=>:class4, :delta1=>:delta4, :id2=>:id5)
+dfout = leftjoin(dfout, df2, on =:id4)
+replace!(dfout.id5, missing=>-999)
+
+df2 =  @select df :time_0 :lat :lon :class1 :delta1 :id
+rename!(df2, :time_0=>:time5, :lat=>:lat5, :lon=>:lon5, :id=>:id5, :class1=>:class5, :delta1=>:delta5)
+dfout = leftjoin(dfout, df2, on =:id5)
+
+
+chained = unique(dfout.id5)
+@rsubset! dfout :id .∉ 
+
+
+
+
+
 
 df2 = @chain df begin
     @transform :date=Date.(:time_0) :time=Hour.(:time_0)
@@ -32,6 +58,7 @@ df2 = leftjoin(df, df2, on=[:lat, :lon, :date, :time] )
 
 dropmissing!(df2)
 
+histogram(df.hours)
 
 
 df = DataFrame( Arrow.Table( "./data/processed/transitions/all_transitions_40NS.arrow" ) )
