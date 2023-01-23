@@ -10,21 +10,20 @@ for year in 2000:2021 ### load in class data and wind speed from era5 and calc t
         @aside sizedf = size(_)[1]
         @transform :id=(1:sizedf).+year*100000000
         @select :Timestamp :lat :lon :Label :id
-        @subset :lat.>-40 :lat.<5 :lon.>-130 :lon.<-70 #### CHANGE ME PER REGION ##### #:lat.<40 :lat.>-40
+        @subset :lat.>-40 :lat.<5 :lon.>-130 :lon.<-70  #### CHANGE ME PER REGION ##### #:lat.<40 :lat.>-40
         dropmissing(_)
         @transform :Timestamp=round.(DateTime.(:Timestamp, "yyyy-mm-dd HH:MM:SS"), Hour(1))
         @transform :time_0=:Timestamp :date=Date.(:Timestamp)   end
     
     era = @chain DataFrame( Arrow.Table( "./data/raw/era5/era5_$(year)_daily_ws.arrow" ) ) begin
-        @subset :lat.>-40 :lat.<5
         @rtransform :lon=:lon.>180 ? :lon.-360 : :lon 
-        @subset :lon.>-130 :lon.<-70 #### CHANGE ME PER REGION #####
+        @subset :lat.>-40 :lat.<5 :lon.>-130 :lon.<-70   #### CHANGE ME PER REGION #####
         @transform :date=Date.(:time)
         @select :date :lat :lon :u :v
         rename( :lat=>:latr, :lon=>:lonr )    end
     
     @showprogress for date in unique(era.date)
-        erat = @subset era :date.<=date.+Day(3) :date.>=date
+        erat = @subset era :date.<=date.+Day(2) :date.>=date
         dft  = @subset df :date.==date
     
         future = @chain df begin
@@ -35,12 +34,12 @@ for year in 2000:2021 ### load in class data and wind speed from era5 and calc t
     
         for i in 1:48
             dft = @chain dft begin
-                @transform :latr=round_step.(:lat, 0.25) :lonr=round_step.(:lon, 0.25)
+                @transform :latr=round_step.(:lat, 0.25) :lonr=round_step.(:lon, 0.25) # round to 0.25 to merge with ERA
                 @rtransform :latr = :latr.==-0.0 ? 0.0 : :latr :lonr=:lonr.==-0.0 ? 0.0 : :lonr
                 innerjoin(_, erat, on = [:date, :latr, :lonr] )
                 @transform :lon=:lon.+:u.*3600.0./111319.488cos.(:lat) :lat=:lat.+:v.*3600.0./111319.488 :Timestamp=:Timestamp.+Hour(1)
                 @select :time_0 :Timestamp :lat :lon :Label :id
-                @transform :latr=round.(Int, :lat) :lonr=round.(Int,:lon) :date=Date.(:Timestamp)   end
+                @transform :latr=round.(Int, :lat) :lonr=round.(Int,:lon) :date=Date.(:Timestamp)   end  # round to integer to find potential close patch
     
             temp = innerjoin(dft, future, on =[:Timestamp, :latr, :lonr] )
             if size(temp)[1] > 0 
