@@ -3,15 +3,23 @@ using ProgressMeter, Statistics
 if occursin("AICCA", pwd()) == false cd("AICCA") else end
 
 df = DataFrame()
-fl = filter( !contains(".DS"), readdir( joinpath(pwd(), "data/raw/yearly/") ) )
-@showprogress for file in fl append!( df, DataFrame( Arrow.Table( joinpath( pwd(),"data/raw/yearly/", file ) ) ) ) end
+fl = filter( !contains(".DS"), readdir( joinpath( pwd(), "data/raw/yearly/") ) )
+@showprogress for file in fl 
+    temp = DataFrame( Arrow.Table( joinpath( pwd(),"data/raw/yearly/", file ) ) )
+    temp = @subset temp :Label.!=43 
+    @select! temp :Label :Timestamp :lat :lon :platform :Cloud_Optical_Thickness_mean :Cloud_Top_Pressure_mean :Cloud_Effective_Radius_mean :Cloud_Fraction :Cloud_Water_Path_mean :Cloud_Emissivity_mean :Cloud_Multi_Layer_Fraction
+    dropmissing!(temp, [:Label, :lat, :lon] )
+    append!( df, temp ) 
+end
 
-@subset! df :Label.!=43 
-@select! df :Label :Timestamp :lat :lon :platform :Cloud_Optical_Thickness_mean :Cloud_Phase_Infrared_liquid :Cloud_Phase_Infrared_ice :Cloud_Top_Pressure_mean :Cloud_Effective_Radius_mean :Cloud_Fraction :Cloud_Water_Path_mean :Cloud_Emissivity_mean :Cloud_Multi_Layer_Fraction
+#:Cloud_Phase_Infrared_liquid :Cloud_Phase_Infrared_ice
+
+rename!(df, :Cloud_Optical_Thickness_mean=>:optical_thickness,  :Cloud_Top_Pressure_mean=>:top_pressure, 
+:Cloud_Effective_Radius_mean=>:effective_radius, :Cloud_Fraction=>:cloud_fraction, :Cloud_Water_Path_mean=>:water_path, :Cloud_Emissivity_mean=>:emissivity, :Cloud_Multi_Layer_Fraction=>:multi_layer_frac)
 df.Timestamp = DateTime.(df.Timestamp, "yyyy-mm-dd HH:MM:SS")
-@transform! df :date = Date.(:Timestamp) :hour=Hour.(:Timestamp)
-dropmissing!(df, [:Label, :lat, :lon] )
+#@transform! df :date = Date.(:Timestamp) :hour=Hour.(:Timestamp)
 Arrow.write( joinpath(pwd(),"data/raw/all_AICCA.arrow"), df )
+
 
 
 df.lon = convert.( Float16, floor.(df.lon) .+ 0.5 )
@@ -39,3 +47,5 @@ df = @by( df, [:Label, :year],
 
 Arrow.write( joinpath(pwd(),"data/processed/mean_class_props.arrow"), df )
 df = nothing
+
+df

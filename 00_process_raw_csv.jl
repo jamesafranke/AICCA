@@ -3,7 +3,7 @@ using ProgressMeter
 if occursin("AICCA", pwd()) == false cd("AICCA") else end
 
 ########################################  process csv data to arrow ################################################# 
-for year in 2012:2021
+for year in 2022:2022
     df = DataFrame()
     fl = filter( !contains(".DS"), readdir( joinpath(pwd(), "data/raw/$year/") ) )
     @showprogress for file in fl

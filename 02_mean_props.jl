@@ -35,3 +35,10 @@ temp3 = @subset df :Label.==25
 temp4 = @subset df :Label.==27
 
 (temp.cot + temp2.cot) / 2 - (temp3.cot + temp4.cot) / 2
+
+
+df = DataFrame( Arrow.Table( "./data/raw/yearly/2003.arrow" ) )
+
+@select! df :Label  :Timestamp  :Cloud_Optical_Thickness_mean  :Cloud_Phase_Infrared_liquid :lat :lon :platform
+
+
