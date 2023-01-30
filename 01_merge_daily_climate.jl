@@ -10,18 +10,14 @@ function get_subtrop(dfin) ### subtropical regions with large sc decks ###
 end
 
 ## Load in the class data and merge with some climate vars for analysis ##
-df = DataFrame( Arrow.Table( "./data/raw/all_AICCA_no_properties.arrow" ) )
-@transform! df :year=Year.(:date)
-df = get_subtrop(df)
-
 df = DataFrame( Arrow.Table( "./data/raw/all_AICCA.arrow" ) )
-df = @select df :Label :platform :date :hour :lat :lon :Cloud_Optical_Thickness_mean :Cloud_Top_Pressure_mean :Cloud_Fraction
 df = get_subtrop(df)
+@transform! df :date=Date.(:Timestamp)
 df.lon = convert.( Float16, floor.(df.lon) .+ 0.5 )
 df.lat = convert.( Float16, floor.(df.lat) .+ 0.5 )
 
-clim = ["era5_daily_lts_tropics.arrow", "era5_daily_blh_tropics.arrow", "era5_daily_ws_tropics.arrow",
-"era5_daily_t_q.arrow", "era5_daily_sst.arrow", "aot_daily.arrow", "imerg_pr_daily.arrow", "era5_w.arrow"]
+clim = ["era5_daily_lts.arrow", "era5_daily_blh.arrow", "era5_daily_w.arrow", "era5_daily_u.arrow", "era5_daily_v.arrow",
+"era5_daily_t.arrow", "era5_daily_q.arrow", "era5_daily_sst.arrow","era5_daily_msl.arrow"]
 
 @showprogress for file in clim
     dft = DataFrame( Arrow.Table( "./data/processed/$file" ) )
@@ -29,7 +25,7 @@ clim = ["era5_daily_lts_tropics.arrow", "era5_daily_blh_tropics.arrow", "era5_da
     leftjoin!( df, dft, on = [:date, :lat, :lon] )
 end 
 
-Arrow.write(  "./data/processed/subtropic_sc_label_daily_with_frac.arrow" , df )
+Arrow.write(  "./data/processed/subtropics_with_climate.arrow" , df )
 
 #######################################
 #### Calculate ISCCP classes   ########
