@@ -17,51 +17,34 @@ df.lon = convert.( Float16, floor.(df.lon) .+ 0.5 )
 df.lat = convert.( Float16, floor.(df.lat) .+ 0.5 )
 
 clim = ["era5_daily_lts.arrow", "era5_daily_blh.arrow", "era5_daily_w.arrow", "era5_daily_u.arrow", "era5_daily_v.arrow",
-"era5_daily_t.arrow", "era5_daily_q.arrow", "era5_daily_sst.arrow","era5_daily_msl.arrow"]
+"era5_daily_t.arrow", "era5_daily_q.arrow", "era5_daily_sst.arrow","era5_daily_msl.arrow", "imerg_daily_pr.arrow", "avhrr_daily_aot.arrow",]
 
 @showprogress for file in clim
-    dft = DataFrame( Arrow.Table( "./data/processed/$file" ) )
+    dft = DataFrame( Arrow.Table( "./data/processed/climate/$file" ) )
     dft = get_subtrop( dft )
     leftjoin!( df, dft, on = [:date, :lat, :lon] )
 end 
 
 Arrow.write(  "./data/processed/subtropics_with_climate.arrow" , df )
 
-#######################################
-#### Calculate ISCCP classes   ########
-#######################################
-df = DataFrame( Arrow.Table("./data/processed/subtropic_sc_label_daily_with_frac.arrow") )
-rename!(df, :Cloud_Optical_Thickness_mean => :cop, :Cloud_Top_Pressure_mean => :ctp, :Cloud_Fraction => :cf)
-df = @select df :Label :platform :date :hour :lat :lon :cop :ctp :lts :blh :w :sst :aot :pr
-df = dropmissing(df, [:cop, :ctp])
 
-dfo = DataFrame()
-ci = @subset df :cop.>0   :cop.<2.6 :ctp.<440  :ctp.>50
-@transform! ci  :isccp="ci"
-append!(dfo, ci)
-cs = @subset df :cop.>3.6 :cop.<23  :ctp.<440  :ctp.>50 
-@transform! cs  :isccp="cs"
-append!(dfo, cs)
-dc = @subset df :cop.>23  :cop.<379 :ctp.<440  :ctp.>50
-@transform! dc  :isccp="dc"
-append!(dfo, dc)
-ac = @subset df :cop.>0   :cop.<2.6 :ctp.<680  :ctp.>440
-@transform! ac  :isccp="ac"
-append!(dfo, ac)
-as = @subset df :cop.>3.6 :cop.<23  :ctp.<680  :ctp.>440
-@transform! as  :isccp="as"
-append!(dfo, as)
-ns = @subset df :cop.>23  :cop.<379 :ctp.<680  :ctp.>440
-@transform! ns  :isccp="ns"
-append!(dfo, ns)
-c = @subset df  :cop.>0   :cop.<2.6 :ctp.<1000 :ctp.>680 
-@transform! c   :isccp="c"
-append!(dfo, c)
-sc = @subset df :cop.>3.6 :cop.<23  :ctp.<1000 :ctp.>680 
-@transform! sc  :isccp="sc"
-append!(dfo, sc)
-s = @subset df  :cop.>23  :cop.<379 :ctp.<1000 :ctp.>680 
-@transform! s   :isccp="s"
-append!(dfo, s)
 
-Arrow.write(  "./data/processed/subtropic_with_clim_and_isccp.arrow" , dfo )
+df = DataFrame( Arrow.Table( "./data/processed/ubtropics_with_climate.arrow" ) )
+@select! df :Label :Timestamp :lat :lon :platform :optical_thickness :top_pressure :effective_radius :cloud_fraction :water_path :emissivity :multi_layer_frac :date :lts :w :u :v :t :q :sst
+
+dft = DataFrame( Arrow.Table( "./data/processed/climate/imerg_daily_pr.arrow" ) )
+dft = get_subtrop( dft )
+leftjoin!( df, dft, on = [:date, :lat, :lon] )
+
+
+dft = DataFrame( Arrow.Table( "./data/processed/climate/era5_daily_msl.arrow" ) )
+dft = get_subtrop( dft )
+leftjoin!( df, dft, on = [:date, :lat, :lon] )
+
+dft = DataFrame( Arrow.Table( "./data/processed/climate/era5_daily_blh.arrow" ) )
+dft = get_subtrop( dft )
+leftjoin!( df, dft, on = [:date, :lat, :lon] )
+
+dft = DataFrame( Arrow.Table( "./data/processed/climate/avhrr_daily_aot.arrow" ) )
+dft = get_subtrop( dft )
+leftjoin!( df, dft, on = [:date, :lat, :lon] )
