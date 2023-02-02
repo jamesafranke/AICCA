@@ -127,8 +127,6 @@ fl = filter( contains("swh"), readdir( "./data/processed/climate/swh/" ) )
 @transform! df :date=Date.(:time)
 @select! df :date :lat :lon :swh
 @rtransform! df :lon = :lon .> 180 ? :lon .- 360 : :lon
-df.lat = convert.( Float16, df.lat )
-df.lon = convert.( Float16, df.lon )
 dropmissing!(df, :swh)
-df.swh = convert.( Float32, df.swh )
+unique!(df)
 Arrow.write("./data/processed/climate/era5_daily_swh.arrow", df)

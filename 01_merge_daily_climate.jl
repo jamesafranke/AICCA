@@ -28,36 +28,6 @@ end
 Arrow.write(  "./data/processed/subtropics_with_climate.arrow" , df )
 
 
-
 df = DataFrame( Arrow.Table( "./data/processed/subtropics_with_climate.arrow" ) )
 @select! df :Label :Timestamp :lat :lon :platform :optical_thickness :top_pressure :effective_radius :cloud_fraction :water_path :emissivity :multi_layer_frac :date :lts :w :u :v :t :q :sst
 
-dft = DataFrame( Arrow.Table( "./data/processed/climate/imerg_daily_pr.arrow" ) )
-dft = get_subtrop( dft )
-unique!(dft)
-leftjoin!( df, dft, on = [:date, :lat, :lon] )
-
-dft = DataFrame( Arrow.Table( "./data/processed/climate/era5_daily_msl.arrow" ) )
-dft = get_subtrop( dft )
-unique!(dft)
-leftjoin!( df, dft, on = [:date, :lat, :lon] )
-
-dft = DataFrame( Arrow.Table( "./data/processed/climate/era5_daily_blh.arrow" ) )
-dft = get_subtrop( dft )
-unique!(dft)
-leftjoin!( df, dft, on = [:date, :lat, :lon] )
-
-dft = DataFrame( Arrow.Table( "./data/processed/climate/avhrr_daily_aot.arrow" ) )
-dft = get_subtrop( dft )
-dft = @by dft  [:date, :lat, :lon] :aot=mean(:aot)
-leftjoin!( df, dft, on = [:date, :lat, :lon] )
-
-Arrow.write(  "./data/processed/subtropics_with_climate1.arrow" , df )
-
-
-df = DataFrame( Arrow.Table( "./data/processed/subtropics_with_climate.arrow" ) )
-dft = DataFrame( Arrow.Table( "./data/processed/climate/era5_daily_swh.arrow" ) )
-dft = get_subtrop( dft )
-leftjoin!( df, dft, on = [:date, :lat, :lon] )
-
-Arrow.write(  "./data/processed/subtropics_with_climate1.arrow" , df )
