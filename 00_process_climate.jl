@@ -6,7 +6,6 @@
 using Arrow, CSV, DataFrames, DataFramesMeta, Dates, ProgressMeter
 if occursin("AICCA", pwd()) == false cd("AICCA") else end
 
-
 ## lower tropospheric stability from ERA5 (700hpa potential temp - 1000hpa potential temp) ##
 dfb = DataFrame( Arrow.Table( "./data/processed/climate/era5_daily_lts1.arrow") ) 
 append!(dfb,  DataFrame( Arrow.Table( "./data/processed/climate/era5_daily_lts2.arrow") ) )
@@ -17,7 +16,6 @@ dfb.lat = convert.( Float16, dfb.lat )
 dfb.lts = convert.( Float16, dfb.lts )
 @rtransform! dfb :lon = :lon .> 180 ? :lon .- 360 : :lon
 Arrow.write( "./data/processed/climate/era5_daily_lts.arrow", dfb)
-
 
 ## boundary layer height from ERA5 ##
 dfb = DataFrame( Arrow.Table( "./data/processed/era5_daily_blh.arrow") ) 
@@ -111,7 +109,7 @@ Arrow.write("./data/processed/climate/imerg_daily_pr.arrow", df)
 
 ## AOT from AHVRR satellite ##
 df = DataFrame()
-fl = filter( contains("pr"), readdir( "./data/processed/climate/aot/" ) )
+fl = filter( contains("aot"), readdir( "./data/processed/climate/aot/" ) )
 @showprogress for file in fl append!( df, DataFrame( Arrow.Table( "./data/processed/climate/aot/$(file)" )  ) ) end
 @transform! df :date=Date.(:time)
 @select! df :date :lat :lon :aot
@@ -119,4 +117,18 @@ df.lat = convert.( Float16, df.lat )
 df.lon = convert.( Float16, df.lon )
 dropmissing!(df, :aot)
 df.aot = convert.( Float32, df.aot )
-Arrow.write("./data/processed/climate/imerg_daily_pr.arrow", df)
+Arrow.write("./data/processed/climate/avhrr_daily_aot.arrow", df)
+
+
+## wave height from era5 satellite ##
+df = DataFrame()
+fl = filter( contains("swh"), readdir( "./data/processed/climate/swh/" ) )
+@showprogress for file in fl append!( df, DataFrame( Arrow.Table( "./data/processed/climate/swh/$(file)" )  ) ) end
+@transform! df :date=Date.(:time)
+@select! df :date :lat :lon :swh
+@rtransform! df :lon = :lon .> 180 ? :lon .- 360 : :lon
+df.lat = convert.( Float16, df.lat )
+df.lon = convert.( Float16, df.lon )
+dropmissing!(df, :swh)
+df.swh = convert.( Float32, df.swh )
+Arrow.write("./data/processed/climate/era5_daily_swh.arrow", df)
