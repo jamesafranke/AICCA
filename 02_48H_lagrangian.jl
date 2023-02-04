@@ -15,7 +15,7 @@ for year in 2000:2021 ### load in class data and wind speed from era5 and calc t
         @transform :Timestamp=round.(DateTime.(:Timestamp, "yyyy-mm-dd HH:MM:SS"), Hour(1))
         @transform :time_0=:Timestamp :date=Date.(:Timestamp)   end
     
-    era = @chain DataFrame( Arrow.Table( "./data/raw/era5/era5_$(year)_daily_ws.arrow" ) ) begin
+    era = @chain DataFrame( Arrow.Table( "./data/processed/climate/ws/era5_$(year)_daily_ws.arrow" ) ) begin
         @rtransform :lon=:lon.>180 ? :lon.-360 : :lon 
         @subset :lat.>-40 :lat.<5 :lon.>-130 :lon.<-70   #### CHANGE ME PER REGION #####
         @transform :date=Date.(:time)

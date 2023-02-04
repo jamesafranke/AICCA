@@ -31,3 +31,6 @@ Arrow.write(  "./data/processed/subtropics_with_climate.arrow" , df )
 df = DataFrame( Arrow.Table( "./data/processed/subtropics_with_climate.arrow" ) )
 @select! df :Label :Timestamp :lat :lon :platform :optical_thickness :top_pressure :effective_radius :cloud_fraction :water_path :emissivity :multi_layer_frac :date :lts :w :u :v :t :q :sst
 
+df = @subset df :lat.>-39 :lat.<3  :lon.>-120 :lon.<-70
+@transform! df :hour = Hour.(:Timestamp)
+
