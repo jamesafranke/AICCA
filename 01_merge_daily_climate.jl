@@ -34,3 +34,12 @@ df = DataFrame( Arrow.Table( "./data/processed/subtropics_with_climate.arrow" ) 
 df = @subset df :lat.>-39 :lat.<3  :lon.>-120 :lon.<-70
 @transform! df :hour = Hour.(:Timestamp)
 
+
+
+df = DataFrame( Arrow.Table( "./data/raw/all_AICCA.arrow" ) )
+@select! df :lat :lon :Label
+df.lon = convert.( Float16, floor.(df.lon) .+ 0.5 )
+df.lat = convert.( Float16, floor.(df.lat) .+ 0.5 )
+@rtransform! df :lon = :lon.==180.5 ? :lon=-179.5 : :lon
+df = @by df [:lat, :lon, :Label] :counts=size(:Label)[1]
+Arrow.write( "./data/processed/counts_lat_lon.arrow" , df )
