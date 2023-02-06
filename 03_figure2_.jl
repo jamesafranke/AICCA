@@ -656,7 +656,6 @@ dft = @chain df begin
     leftjoin( dft, on=[:ltsbin, :blhbin] )
     @rtransform :plotclass= :maxcount/:total>0.3 ? :maxclass : :nonzeroclass 
     @transform :fracinbin=:maxcount./:totalnozero
-    @subset :total.>100
 end
 
 for class in colorclass
