@@ -86,9 +86,8 @@ scatter!(temp.ltsbin, temp.blhbin, markershape = :circle, markersize = temp.maxc
 for (i, class) in enumerate(colorclass)
     temp = @subset dfc :plotclass.==class
     if size(temp)[1] > 0
-        scatter!( temp.ltsbin, temp.blhbin, markershape = :circle,
-        markersize = temp.maxcount./500, markeralpha = 0.7, markercolor = colors[i], 
-        markerstrokewidth = 0, markerstrokecolor=:black)
+        scatter!( temp.ltsbin, temp.blhbin, markershape = :circle, markersize = temp.maxcount./500, markeralpha = 0.7,
+         markercolor = colors[i],  markerstrokewidth = 0, markerstrokecolor=:black)
     end
 end
 
