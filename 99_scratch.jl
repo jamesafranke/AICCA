@@ -332,3 +332,24 @@ for row in eachrow(dft)
         end
     end
 end 
+
+
+using AWSS3, AWSCore
+
+aws = AWSCore.aws_config( region="us-east-2")
+
+bucket = "noaa-isd-lite-raw-data"
+path = "isd-lite-history.snappy.parquet"
+obj = s3_get(aws, bucket, path)
+
+bytes = AWSS3.read(S3Path("s3://muh-bucket/path/data.csv"))
+df = CSV.read(bytes, DataFrame)
+
+
+stations = read_parquet('isd-lite-history.snappy.parquet')
+bucket_name = 'noaa-isd-lite-raw-data'
+
+metafile_bucket = "hardik-mswep-test"
+metafile = "mswep_gridpoint_gp.feather"
+bucket_name <- "weather-data-mswep-3hourly"
+meta_df = s3read_using(FUN = read_feather, bucket = metafile_bucket, object = metafile)
