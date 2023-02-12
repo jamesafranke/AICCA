@@ -16,7 +16,7 @@ rounds = [0.5, 35, 0.12, 1,  1,  0.5, 0.00025, 0.3, 100, 5, 0.07, 0.1]
 colorclass = [25, 6, 27, 8, 40, 36, 32, 33, 30, 35]
 
 dfc = @chain df begin  
-    @transform :xbin=:lts :ybin=:sst
+    @transform :xbin=:lts :ybin=:blh
     @by [:xbin, :ybin, :Label] :counts=size(:lat)[1]
     @orderby :counts rev=true
     @by [:xbin, :ybin] :maxclass=last(:Label) :maxcount=last(:counts) :total=sum(:counts)
@@ -30,7 +30,7 @@ end
 
 
 dfc = @chain df begin  
-    @transform :xbin=:sst :ybin=:lts
+    @transform :xbin=:blh :ybin=:lts
     @by [:xbin, :ybin, :Label] :counts=size(:lat)[1]
     @orderby :counts rev=true
     @by [:xbin, :ybin] :maxclass=last(:Label) :maxcount=last(:counts) :total=sum(:counts)
@@ -44,11 +44,15 @@ end
 
 
 
-dft = @transform df :xbin= round_step.(:swh, 0.1)
-size(unique(dft.xbin) )
 
+dfc = @chain df begin  
+    @transform :xbin=:lts :ybin=:sst
+    @by [:xbin, :ybin, :Label] :counts=size(:lat)[1]
+    @orderby :counts
+    @by [:xbin, :ybin] :maxclass=last(:Label) :maxcount=last(:counts) :total=sum(:counts)
+end
 
-
-
+temp  = @by dfc :maxclass :counts=size(:maxcount)[1]
+@orderby temp -:counts
 
 

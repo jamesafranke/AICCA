@@ -346,9 +346,6 @@ bytes = AWSS3.read(S3Path("s3://muh-bucket/path/data.csv"))
 df = CSV.read(bytes, DataFrame)
 
 
-stations = read_parquet('isd-lite-history.snappy.parquet')
-bucket_name = 'noaa-isd-lite-raw-data'
-
 metafile_bucket = "hardik-mswep-test"
 metafile = "mswep_gridpoint_gp.feather"
 bucket_name <- "weather-data-mswep-3hourly"

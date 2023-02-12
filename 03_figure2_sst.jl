@@ -1,13 +1,14 @@
-using Plots; gr(); Plots.theme(:default) #plotlyjs()
+using Plots, StatsPlots; gr(); Plots.theme(:default) #plotlyjs()
 using Arrow, DataFrames, DataFramesMeta, Dates, Statistics
 if occursin("AICCA", pwd()) == false cd("AICCA") else end
 
+round_step(x, step) = round(x / step) * step
+
 ### load in class data for the sub tropics merged with climate vars ###
 df = DataFrame( Arrow.Table( "./data/processed/subtropics_with_climate.arrow" ) )
-df = unique(df)
+df = dropmissing(df, [:sst, :lts] )
 
 dfc = @chain df begin  
-    dropmissing( [:sst, :lts] )
     @transform :xbin=round_step.(:sst, 0.25) :ybin=round_step.(:lts, 0.36)
     @by [:xbin, :ybin, :Label] :counts=size(:lat)[1]
     @orderby :counts rev=true
@@ -21,7 +22,7 @@ dfc = @chain df begin
 end
 
 colorclass = [ 40, 27, 25, 36, 26, 23, 34, 30, 28, 35]
-colors = cgrad(:Hiroshige, 10, categorical = true)
+colors = cgrad(:vik, 10, categorical = true, rev = true)
 colorclass2 = [ 2, 8, 19]
 colors2 = cgrad(:Cassatt2, 6, categorical = true, rev=true)
 
@@ -32,13 +33,13 @@ scatter(temp.xbin, temp.ybin, markershape = :square, markersize = marksize, mark
 
 for (i, class) in enumerate(colorclass)
     temp = @subset dfc :plotclass.==class
-    scatter!( temp.xbin, temp.ybin, markershape = :square, markersize = marksize, markeralpha = 0.95, 
+    scatter!( temp.xbin, temp.ybin, markershape = :square, markersize = marksize, markeralpha = 0.85, 
     markercolor = colors[i], markerstrokewidth = 0)
 end
 
 for (i, class) in enumerate(colorclass2)
     temp = @subset dfc :plotclass.==class
-    scatter!( temp.xbin, temp.ybin, markershape = :square, markersize = marksize, markeralpha = 0.95, 
+    scatter!( temp.xbin, temp.ybin, markershape = :square, markersize = marksize, markeralpha = 0.85, 
     markercolor = colors2[i], markerstrokewidth = 0)
 end
 
@@ -50,9 +51,9 @@ xlims!(283, 305)
 ylims!(4, 34)
 png("./figures/heatmap_lts_sst.png")
 
-dfr = @subset df :Label.!=0
-dfc = @chain dfr begin  
-    dropmissing( [:sst, :lts] )
+
+dfc = @chain df begin 
+    @subset :Label.!=0 
     @transform :xbin=round_step.(:sst, 0.25) :ybin=round_step.(:lts, 0.36)
     @by [:xbin, :ybin, :Label] :counts=size(:lat)[1]
     @orderby :counts rev=true
@@ -108,9 +109,10 @@ png("./figures/heatmap_lts_sst_occurance.png")
 
 
 
+
 dfc = @chain df begin  
-    dropmissing( [:sst, :lts] )
-    @by [:xbin, :ybin, :Label] :counts=size(:lat)[1]
+    @transform :xbin=round_step.(:sst, 0.25) :ybin=round_step.(:lts, 0.36)
+    @by [:xbin, :ybin, :Label] :counts=size(:Label)[1]
     @orderby :counts rev=true
     @aside dft = @subset _ :Label.!=0 
     @aside dft = @by dft [:xbin, :ybin] :nonzeroclass=last(:Label) :totalnozero=sum(:counts)
@@ -120,3 +122,26 @@ dfc = @chain df begin
     @transform :fracinbin=:maxcount./:totalnozero
     @subset :total.>20
 end
+
+temp = @chain df begin  
+    @transform :xbin=round_step.(:sst, 0.25) :ybin=round_step.(:lts, 0.36)
+    @by [:xbin, :ybin, :Label] :counts=size(:Label)[1]
+end
+
+dfc = leftjoin(dfc, temp, on=[:xbin, :ybin])
+dfc = @by dfc [:plotclass, :Label] :total=sum(:counts)
+
+Arrow.write( "./data/processed/histogram_plot_to_python.arrow", dfc )
+
+
+
+dfc = @chain df begin  
+    @subset :Label.!=0 
+    @by [:lat, :lon, :Label] :counts=size(:lat)[1]
+    @orderby :counts rev=true
+    @aside dft = @subset _ :Label.!=0 
+    @by [:lat, :lon] :maxclass=last(:Label)
+end
+
+Arrow.write( "./data/processed/geo_plot_no_zeros.arrow", dfc )
+
