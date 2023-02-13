@@ -11,7 +11,7 @@ df = dropmissing(df, [:sst, :lts] )
 dfc = @chain df begin  
     @transform :xbin=round_step.(:sst, 0.25) :ybin=round_step.(:lts, 0.36)
     @by [:xbin, :ybin, :Label] :counts=size(:lat)[1]
-    @orderby :counts rev=true
+    @orderby :counts
     @aside dft = @subset _ :Label.!=0 
     @aside dft = @by dft [:xbin, :ybin] :nonzeroclass=last(:Label) :totalnozero=sum(:counts)
     @by [:xbin, :ybin] :maxclass=last(:Label) :maxcount=last(:counts) :total=sum(:counts)
