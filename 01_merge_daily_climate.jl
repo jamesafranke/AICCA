@@ -54,3 +54,9 @@ df.lon = convert.( Float16, floor.(df.lon) .+ 0.5 )
 df.lat = convert.( Float16, floor.(df.lat) .+ 0.5 )
 @rtransform! df :lon = :lon.==180.5 ? :lon=-179.5 : :lon
 Arrow.write( "./data/processed/AICC_lat_lon.arrow" , df )
+
+
+df = DataFrame( Arrow.Table( "./data/raw/all_AICCA.arrow" ) )
+@select! df :Label :Timestamp :lat :lon
+df = @subset df :lat.>-43 :lat.<4 :lon.>-130 :lon.<-69 
+Arrow.write( "./data/processed/AICCA_south_pacific.arrow" , df )
