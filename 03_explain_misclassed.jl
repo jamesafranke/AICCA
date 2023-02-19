@@ -21,6 +21,8 @@ dfc = @chain DataFrame( Arrow.Table( "./data/processed/subtropics_with_climate.a
     @by [:xbin, :ybin] :maxclass=last(:Label) :maxcount=last(:counts) :total=sum(:counts)
 end
 
+Arrow.write( "./data/processed/to_python_subtrop_met_bins.arrow", dfc )
+
 df = DataFrame( Arrow.Table( "./data/processed/subtropics_with_climate.arrow" ) )
 @transform! df :xbin=round_step.(:sst, 0.25) :ybin=round_step.(:lts, 0.36)
 df = dropmissing(df, [:xbin,:ybin])

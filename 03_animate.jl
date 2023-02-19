@@ -1,25 +1,22 @@
 using Plots; gr(); Plots.theme(:default)
-if occursin("AICCA", pwd()) == false cd("AICCA") else end
 using Images, FileIO
+if occursin("AICCA", pwd()) == false cd("AICCA") else end
 
-leg = load("/Users/jamesfranke/Documents/julia/AICCA/figures/sc_gif_legend.png")
+leg = plot(load("/Users/jamesfranke/Documents/julia/AICCA/figures/sc_gif_legend.png"), showaxis=false, grid=false, xticks=:none, yticks=:none)
+
 root = "/Users/jamesfranke/Documents/julia/AICCA/figures/animate/"
-fl = filter( contains(".png"), readdir(root) )
+fl1  = filter( contains("sc"), readdir(root) )
+fl2  = filter( contains("met"), readdir(root) )
 
-l = @layout [ a{0.8h}
-              b{0.2h} ]
+l = @layout [ a{0.8h} b{0.8h}
+              c{0.2h} d{0.2h} ]
 
-p2 = plot(leg, showaxis=false, grid=false, xticks=:none, yticks=:none)
-
-anim = @animate for file in fl
-    p1 = plot(load(joinpath(root, file)), showaxis=false, grid=false, xticks=:none, yticks=:none);
-    plot(p1, p2, layout = l, size=(600,600), dpi=800 )
+anim = @animate for i in 1:42
+    p1 = plot(load(joinpath(root, fl1[i])), showaxis=false, grid=false, xticks=:none, yticks=:none)
+    p2 = plot(load(joinpath(root, fl2[i])), showaxis=false, grid=false, xticks=:none, yticks=:none)
+    plot(p1, p2, leg, layout = l, size=(1200,600), dpi=200)
 end
 gif(anim, "./figures/sc_south_pacific.gif", fps = 1)
-
-
-
-
 
 
 
