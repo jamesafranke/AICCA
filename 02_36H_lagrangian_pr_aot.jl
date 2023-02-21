@@ -33,7 +33,7 @@ for year in 2000:2000 ### load in class data and wind speed from era5 and calc t
         rename( :lat=>:latr, :lon=>:lonr )    end
 
     pr = @chain DataFrame( Arrow.Table( "./data/processed/climate/lagrangian/imerg_$(year)_daily_pr.arrow" ) ) begin
-        @transform :date=Date.(:time) :latr=round_step.(:lat, 0.25) :lonr=round_step.(:lon, 0.25)
+        @transform :date=Date.(:time) :latr=round_step.(:lat, 0.25) :lonr=round_step.(:lon, 0.25) :pr=:pr./24
         @rtransform :latr=:latr.==-0.0 ? 0.0 : :latr  :lonr=:lonr.==-0.0 ? 0.0 : :lonr
         @by [:latr, :lonr, :date] :pr=mean(skipmissing(:pr))
         @select :lonr :latr :date :pr         end
