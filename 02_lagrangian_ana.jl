@@ -9,17 +9,17 @@ met = DataFrame( Arrow.Table( "./data/processed/to_python_subtrop_met_bins.arrow
 @transform! df :xbin=round_step.(:sstp, 0.25) :ybin=round_step.(:ltsp, 0.36)
 leftjoin!(df, met, on =[:xbin,:ybin])
 
-temp =  @subset df Date.(:Timestamp).==Date("2020-10-23") :Label.==35 :maxclass.==35 
-t = @subset temp :prt.==0
+#temp =  @subset df Date.(:Timestamp).==Date("2020-10-23") :Label.==35 :maxclass.==35 
+t = @subset df :prt.==0
 t1 = @subset t :next_label.==35
 t2 = @subset t :next_label.!=35
-scatter([0],[size(t2)[1]./(size(t1)[1].+size(t2)[1])*100], leg=false)
+scatter([0],[size(t2)[1]./(size(t1)[1].+size(t2)[1])*100], leg=false, color=:black)
 
-for i in 1:10
-    t = @subset temp :prt.<i :prt.>(i-1)
+for i in 1:15
+    t = @subset df :prt.<i :prt.>(i-1)
     t1 = @subset t :next_label.==35
     t2 = @subset t :next_label.!=35
-    scatter!([i-0.5],[size(t2)[1]./(size(t1)[1].+size(t2)[1])*100])
+    scatter!([i-0.5],[size(t2)[1]./(size(t1)[1].+size(t2)[1])*100], color=:black)
 end 
 #ylims!(0,100)
 xlabel!("mean accumulated pr between samples")
@@ -115,3 +115,6 @@ end
 bar!(temp1.next_label, temp1.counts, alpha=0.5, label="pr>10")
 xlabel!("next class after 35")
 ylabel!("relative rate")
+
+
+
