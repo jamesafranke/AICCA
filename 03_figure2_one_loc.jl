@@ -3,8 +3,8 @@ using Arrow, DataFrames, DataFramesMeta, Dates, Statistics
 if occursin("AICCA", pwd()) == false cd("AICCA") else end
 round_step(x, step) = round(x / step) * step
 
-df = DataFrame( Arrow.Table( "./data/processed/subtropics_with_climate.arrow" ) )
-df = dropmissing(df, [:sst, :lts] )
+dfc = DataFrame( Arrow.Table( "./data/processed/subtropics_with_climate.arrow" ) )
+dfc = dropmissing(dfc, [:sst, :lts] )
 
 dfc = @chain df begin  
     @subset :Label.!=0

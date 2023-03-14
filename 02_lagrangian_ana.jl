@@ -9,7 +9,7 @@ met = DataFrame( Arrow.Table( "./data/processed/to_python_subtrop_met_bins.arrow
 @transform! df :xbin=round_step.(:sstp, 0.25) :ybin=round_step.(:ltsp, 0.36)
 leftjoin!(df, met, on =[:xbin,:ybin])
 
-#temp =  @subset df Date.(:Timestamp).==Date("2020-10-23") :Label.==35 :maxclass.==35 
+temp =  @subset df Date.(:Timestamp).>=Date("2020-10-25") Date.(:Timestamp).<=Date("2020-10-27")  :Label.==35 :maxclass.==35 
 t = @subset df :prt.==0
 t1 = @subset t :next_label.==35
 t2 = @subset t :next_label.!=35
@@ -24,8 +24,6 @@ end
 #ylims!(0,100)
 xlabel!("mean accumulated pr between samples")
 ylabel!("transition probability [%]")
-
-
 
 
 colorclass = [ 40, 27, 25, 36, 26, 23, 34, 30, 28, 35]

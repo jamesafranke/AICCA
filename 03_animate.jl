@@ -21,6 +21,24 @@ end
 gif(anim, "./figures/sc_south_pacific.gif", fps = 1)
 
 
+root = "/Users/jamesfranke/Documents/julia/AICCA/figures/animate/"
+fl1  = filter( contains("met"), readdir(root) )
+fl2  = filter( contains("pr"), readdir(root) )
+fl3  = filter( contains("sst"), readdir(root) )
+fl4  = filter( contains("lts"), readdir(root) )
+
+l = @layout [ a{0.5h} b{0.5h}
+              c{0.5h} d{0.5h} ]
+
+anim = @animate for i in 1:31
+    p1 = plot(load(joinpath(root, fl1[i])), showaxis=false, grid=false, xticks=:none, yticks=:none)
+    p2 = plot(load(joinpath(root, fl2[i])), showaxis=false, grid=false, xticks=:none, yticks=:none)
+    p3 = plot(load(joinpath(root, fl3[i])), showaxis=false, grid=false, xticks=:none, yticks=:none)
+    p4 = plot(load(joinpath(root, fl4[i])), showaxis=false, grid=false, xticks=:none, yticks=:none)
+    plot(p1, p2, p3, p4, layout = l, size=(1000,800), dpi=200)
+end
+gif(anim, "./figures/sc_south_pacific_met.gif", fps = 1)
+
 
 
 #@gif for i ∈ 1:n circleplot(x, y, i, line_z = 1:n, cbar = false, framestyle = :zerolines) end
