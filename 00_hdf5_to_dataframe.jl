@@ -32,3 +32,5 @@ for day in 23:31
         download("wget --user=xx --password=xx $(file2) -P ./data/raw/imerg/halfhour/")
     end
 end
+
+

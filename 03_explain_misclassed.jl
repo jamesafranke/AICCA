@@ -20,7 +20,6 @@ dfc = @chain DataFrame( Arrow.Table( "./data/processed/subtropics_with_climate.a
     @orderby :counts
     @by [:xbin, :ybin] :maxclass=last(:Label) :maxcount=last(:counts) :total=sum(:counts)
 end
-
 Arrow.write( "./data/processed/to_python_subtrop_met_bins.arrow", dfc )
 
 df = DataFrame( Arrow.Table( "./data/processed/subtropics_with_climate.arrow" ) )

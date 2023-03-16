@@ -41,4 +41,14 @@ gif(anim, "./figures/sc_south_pacific_met.gif", fps = 1)
 
 
 
+root = "/Users/jamesfranke/Documents/julia/AICCA/figures/animate/"
+fl1  = filter( contains("_t_"), readdir(root) )
+
+anim = @animate for i in 1:31
+    plot(load(joinpath(root, fl1[i])), showaxis=false, grid=false, xticks=:none, yticks=:none, size=(1000,800), dpi=200)
+end
+gif(anim, "./figures/sc_south_pacific_700_t.gif", fps = 1)
+
+
+
 #@gif for i ∈ 1:n circleplot(x, y, i, line_z = 1:n, cbar = false, framestyle = :zerolines) end
