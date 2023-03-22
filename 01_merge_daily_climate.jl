@@ -18,28 +18,24 @@ df.lat = convert.( Float16, floor.(df.lat) .+ 0.5 )
 
 clim = ["era5_daily_lts.arrow", "era5_daily_blh.arrow", "era5_daily_w.arrow", "era5_daily_u.arrow", "era5_daily_v.arrow", "era5_daily_swh.arrow",
 "era5_daily_t.arrow", "era5_daily_q.arrow", "era5_daily_sst.arrow","era5_daily_msl.arrow", "imerg_daily_pr.arrow", "avhrr_daily_aot.arrow"]
-
 @showprogress for file in clim
     dft = DataFrame( Arrow.Table( "./data/processed/climate/$file" ) )
     dft = get_subtrop( dft )
     leftjoin!( df, dft, on = [:date, :lat, :lon] )
 end 
-
 Arrow.write(  "./data/processed/subtropics_with_climate.arrow" , df )
 
 
 
 
-
-df = DataFrame( Arrow.Table( "./data/processed/subtropics_with_climate.arrow" ) )
-@select! df :Label :Timestamp :lat :lon :platform :optical_thickness :top_pressure :effective_radius :cloud_fraction :water_path :emissivity :multi_layer_frac :date :lts :w :u :v :t :q :sst
-
-df = @subset df :lat.>-39 :lat.<3  :lon.>-120 :lon.<-70
-@transform! df :hour = Hour.(:Timestamp)
-
-
-
 df = DataFrame( Arrow.Table( "./data/raw/all_AICCA.arrow" ) )
+@select! df :lat :lon :Label :platform :Timestamp
+### ISSUE with decemeber, 2021 on the AQUA platform ###
+temp = @subset df Year.(:Timestamp).==Year(2021)
+df = @subset df Year.(:Timestamp).!=Year(2021)
+temp = @rsubset temp Date.(:Timestamp) ∉ Date(2021,12,10):Day(1):Date(2021,12,31) || :platform.!="AQUA"
+append!(df, temp)
+######################################################## 
 @select! df :lat :lon :Label
 df.lon = convert.( Float16, floor.(df.lon) .+ 0.5 )
 df.lat = convert.( Float16, floor.(df.lat) .+ 0.5 )
@@ -48,12 +44,16 @@ df = @by df [:lat, :lon, :Label] :counts=size(:Label)[1]
 Arrow.write( "./data/processed/counts_lat_lon.arrow" , df )
 
 
+
+
 df = DataFrame( Arrow.Table( "./data/raw/all_AICCA.arrow" ) )
 @select! df :lat :lon :Label
 df.lon = convert.( Float16, floor.(df.lon) .+ 0.5 )
 df.lat = convert.( Float16, floor.(df.lat) .+ 0.5 )
 @rtransform! df :lon = :lon.==180.5 ? :lon=-179.5 : :lon
 Arrow.write( "./data/processed/AICC_lat_lon.arrow" , df )
+
+
 
 
 df = DataFrame( Arrow.Table( "./data/raw/all_AICCA.arrow" ) )

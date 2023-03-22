@@ -1,5 +1,5 @@
-using Plots, StatsPlots; gr(); Plots.theme(:default) #plotlyjs()
 using Arrow, DataFrames, DataFramesMeta, Dates, Statistics, Impute
+using Plots, StatsPlots; gr(); Plots.theme(:default)
 if occursin("AICCA", pwd()) == false cd("AICCA") else end
 round_step(x, step) = round(x / step) * step
 
