@@ -1,5 +1,4 @@
-using DataFrames, DataFramesMeta, CSV, Dates, Arrow
-using ProgressMeter
+using DataFrames, DataFramesMeta, CSV, Dates, Arrow, ProgressMeter
 if occursin("AICCA", pwd()) == false cd("AICCA") else end
 
 ########################################  process csv data to arrow ################################################# 
@@ -18,4 +17,3 @@ for year in 2022:2022
     @transform! df @byrow :Timestamp=:Timestamp[1:19]
     Arrow.write( joinpath(pwd(),"data/raw/yearly/$(year).arrow"), df )
 end
-

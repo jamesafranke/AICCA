@@ -1,5 +1,4 @@
-using Arrow, DataFrames, DataFramesMeta, Dates
-using ProgressMeter, Statistics
+using Arrow, DataFrames, DataFramesMeta, Dates, ProgressMeter, Statistics
 if occursin("AICCA", pwd()) == false cd("AICCA") else end
 
 df = DataFrame()
@@ -15,7 +14,8 @@ end
 #:Cloud_Phase_Infrared_liquid :Cloud_Phase_Infrared_ice
 
 rename!(df, :Cloud_Optical_Thickness_mean=>:optical_thickness,  :Cloud_Top_Pressure_mean=>:top_pressure, 
-:Cloud_Effective_Radius_mean=>:effective_radius, :Cloud_Fraction=>:cloud_fraction, :Cloud_Water_Path_mean=>:water_path, :Cloud_Emissivity_mean=>:emissivity, :Cloud_Multi_Layer_Fraction=>:multi_layer_frac)
+:Cloud_Effective_Radius_mean=>:effective_radius, :Cloud_Fraction=>:cloud_fraction, :Cloud_Water_Path_mean=>:water_path, 
+:Cloud_Emissivity_mean=>:emissivity, :Cloud_Multi_Layer_Fraction=>:multi_layer_frac)
 df.Timestamp = DateTime.(df.Timestamp, "yyyy-mm-dd HH:MM:SS") 
 #@transform! df :date = Date.(:Timestamp) :hour=Hour.(:Timestamp)
 Arrow.write( joinpath(pwd(),"data/raw/all_AICCA.arrow"), df )
@@ -25,6 +25,29 @@ df.lon = convert.( Float16, floor.(df.lon) .+ 0.5 )
 df.lat = convert.( Float16, floor.(df.lat) .+ 0.5 )
 @select! df :Label :date :hour :lat :lon
 Arrow.write( joinpath(pwd(),"data/raw/all_AICCA_no_properties.arrow"), df )
+
+
+
+######################################################## 
+######################################################## 
+#### to get counts in lat and lon ####
+df = DataFrame( Arrow.Table( "./data/raw/all_AICCA.arrow" ) )
+@select! df :lat :lon :Label :platform :Timestamp
+
+### ISSUE with decemeber, 2021 on the AQUA platform ###
+temp = @subset df Year.(:Timestamp).==Year(2021)
+df = @subset df Year.(:Timestamp).!=Year(2021)
+temp = @rsubset temp Date.(:Timestamp) ∉ Date(2021,12,10):Day(1):Date(2021,12,31) || :platform.!="AQUA"
+append!(df, temp)
+
+
+@select! df :lat :lon :Label
+df.lon = convert.( Float16, floor.(df.lon) .+ 0.5 )
+df.lat = convert.( Float16, floor.(df.lat) .+ 0.5 )
+@rtransform! df :lon = :lon.==180.5 ? :lon=-179.5 : :lon
+df = @by df [:lat, :lon, :Label] :counts=size(:Label)[1]
+Arrow.write( "./data/processed/counts_lat_lon.arrow" , df )
+
 
 
 ########################################  process data to mean class properties ############################################ 
@@ -45,6 +68,3 @@ df = @by( df, [:Label, :year],
     :er75=m75(:Cloud_Effective_Radius_mean),  :wp75=m75(:Cloud_Water_Path_mean),  :cf75=m75(:Cloud_Fraction) )
 
 Arrow.write( joinpath(pwd(),"data/processed/mean_class_props.arrow"), df )
-df = nothing
-
-df

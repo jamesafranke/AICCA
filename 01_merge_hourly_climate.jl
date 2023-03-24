@@ -33,4 +33,3 @@ end
 
 select!(df, Not([:year]))
 Arrow.write(joinpath(pwd(),"data/processed/subtropic_sc_label_hourly_clim.arrow"), df)
-
