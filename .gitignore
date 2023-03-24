@@ -1,8 +1,5 @@
 /data/raw/*
 /data/processed/*
 /figures/*
+/old/*
 .DS_store
-sc_deck_figures.ipynb
-dowload_himawari.py
-99_scratch.jl
-
