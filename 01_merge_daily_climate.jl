@@ -1,13 +1,6 @@
 using Arrow, DataFrames, DataFramesMeta, Dates, ProgressMeter
 if occursin("AICCA", pwd()) == false cd("AICCA") else end
-
-function get_subtrop(dfin) ### subtropical regions with large sc decks ###
-    dfout = DataFrame()
-    append!( dfout, @subset dfin :lat.>7   :lat.<39 :lon.>-165 :lon.<-100 ) # north pacific
-    append!( dfout, @subset dfin :lat.>-39 :lat.<3  :lon.>-120 :lon.<-70  ) # south pacific
-    append!( dfout, @subset dfin :lat.>-35 :lat.<0  :lon.>-25  :lon.<20   ) # south alantic
-    return dfout
-end
+include("00_helper.jl")
 
 ## Load in the class data and merge with some climate vars for analysis ##
 df = DataFrame( Arrow.Table( "./data/raw/all_AICCA.arrow" ) )
@@ -24,39 +17,3 @@ clim = ["era5_daily_lts.arrow", "era5_daily_blh.arrow", "era5_daily_w.arrow", "e
     leftjoin!( df, dft, on = [:date, :lat, :lon] )
 end 
 Arrow.write(  "./data/processed/subtropics_with_climate.arrow" , df )
-
-
-
-
-df = DataFrame( Arrow.Table( "./data/raw/all_AICCA.arrow" ) )
-@select! df :lat :lon :Label :platform :Timestamp
-### ISSUE with decemeber, 2021 on the AQUA platform ###
-temp = @subset df Year.(:Timestamp).==Year(2021)
-df = @subset df Year.(:Timestamp).!=Year(2021)
-temp = @rsubset temp Date.(:Timestamp) ∉ Date(2021,12,10):Day(1):Date(2021,12,31) || :platform.!="AQUA"
-append!(df, temp)
-######################################################## 
-@select! df :lat :lon :Label
-df.lon = convert.( Float16, floor.(df.lon) .+ 0.5 )
-df.lat = convert.( Float16, floor.(df.lat) .+ 0.5 )
-@rtransform! df :lon = :lon.==180.5 ? :lon=-179.5 : :lon
-df = @by df [:lat, :lon, :Label] :counts=size(:Label)[1]
-Arrow.write( "./data/processed/counts_lat_lon.arrow" , df )
-
-
-
-
-df = DataFrame( Arrow.Table( "./data/raw/all_AICCA.arrow" ) )
-@select! df :lat :lon :Label
-df.lon = convert.( Float16, floor.(df.lon) .+ 0.5 )
-df.lat = convert.( Float16, floor.(df.lat) .+ 0.5 )
-@rtransform! df :lon = :lon.==180.5 ? :lon=-179.5 : :lon
-Arrow.write( "./data/processed/AICC_lat_lon.arrow" , df )
-
-
-
-
-df = DataFrame( Arrow.Table( "./data/raw/all_AICCA.arrow" ) )
-@select! df :Label :Timestamp :lat :lon
-df = @subset df :lat.>-43 :lat.<4 :lon.>-130 :lon.<-69 
-Arrow.write( "./data/processed/AICCA_south_pacific.arrow" , df )

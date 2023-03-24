@@ -1,15 +1,6 @@
-using Arrow, DataFrames, DataFramesMeta, Dates, Statistics, Impute
+using Arrow, DataFrames, DataFramesMeta, Dates, Statistics
 using Plots, StatsPlots; gr(); Plots.theme(:default)
-if occursin("AICCA", pwd()) == false cd("AICCA") else end
-round_step(x, step) = round(x / step) * step
-
-function get_subtrop(dfin) ### subtropical regions with large sc decks ###
-    dfout = DataFrame()
-    append!( dfout, @subset dfin :lat.>7   :lat.<39 :lon.>-165 :lon.<-100 ) # north pacific
-    append!( dfout, @subset dfin :lat.>-39 :lat.<3  :lon.>-120 :lon.<-70  ) # south pacific
-    append!( dfout, @subset dfin :lat.>-35 :lat.<0  :lon.>-25  :lon.<20   ) # south alantic
-    return dfout
-end
+include("00_helper.jl")
 
 ### get dominant bins ###
 dfc = @chain DataFrame( Arrow.Table( "./data/processed/subtropics_with_climate.arrow" ) ) begin  
