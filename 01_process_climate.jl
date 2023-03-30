@@ -5,6 +5,7 @@
 ###################################################################
 using Arrow, CSV, DataFrames, DataFramesMeta, Dates, ProgressMeter
 if occursin("AICCA", pwd()) == false cd("AICCA") else end
+include("00_helper.jl")
 
 ## lower tropospheric stability from ERA5 (700hpa potential temp - 1000hpa potential temp) ##
 dfb = DataFrame( Arrow.Table( "./data/processed/climate/era5_daily_lts1.arrow") ) 
@@ -120,7 +121,7 @@ df.aot = convert.( Float32, df.aot )
 Arrow.write("./data/processed/climate/avhrr_daily_aot.arrow", df)
 
 
-## wave height from era5 satellite ##
+## wave height from era5 ##
 df = DataFrame()
 fl = filter( contains("swh"), readdir( "./data/processed/climate/swh/" ) )
 @showprogress for file in fl append!( df, DataFrame( Arrow.Table( "./data/processed/climate/swh/$(file)" )  ) ) end
@@ -130,3 +131,25 @@ fl = filter( contains("swh"), readdir( "./data/processed/climate/swh/" ) )
 dropmissing!(df, :swh)
 unique!(df)
 Arrow.write("./data/processed/climate/era5_daily_swh.arrow", df)
+
+
+### EIS estimated inversion strenght ###
+df1 = DataFrame( Arrow.Table( "./data/processed/climate/era5_daily_t_1000.arrow" ) )
+@select! df1 :time :lat :lon :t
+rename!( df1, :t=>:t1000 )
+@rtransform! df1 :lon = :lon .> 180 ? :lon .- 360 : :lon
+df1 = get_subtrop( df1 )
+df7 = DataFrame( Arrow.Table( "./data/processed/climate/era5_daily_t_700.arrow" ) )
+@select! df7 :time :lat :lon :t
+rename!( df7, :t=>:t700 )
+@rtransform! df7 :lon = :lon .> 180 ? :lon .- 360 : :lon
+df7 = get_subtrop( df7 )
+@transform! df1 :t700=df7.t700
+dropmissing!(df1)
+
+@transform! df1 :eis=EIS.(:t1000, :t700)
+@select! df1 :time :lat :lon :eis
+
+@transform! df1 :date=Date.(:time)
+@select! df1 :date :lat :lon :eis
+Arrow.write("./data/processed/climate/era5_daily_eis.arrow", df1)

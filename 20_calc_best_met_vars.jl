@@ -1,6 +1,5 @@
 using Arrow, DataFrames, DataFramesMeta, Dates, ProgressMeter, Statistics
 if occursin("AICCA", pwd()) == false cd("AICCA") else end
-
 round_step(x, step) = round(x / step) * step
 
 df = DataFrame( Arrow.Table( "./data/processed/subtropics_with_climate.arrow" ) )
