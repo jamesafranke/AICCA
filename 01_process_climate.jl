@@ -137,19 +137,17 @@ Arrow.write("./data/processed/climate/era5_daily_swh.arrow", df)
 df1 = DataFrame( Arrow.Table( "./data/processed/climate/era5_daily_t_1000.arrow" ) )
 @select! df1 :time :lat :lon :t
 rename!( df1, :t=>:t1000 )
+df7 = DataFrame( Arrow.Table( "./data/processed/climate/era5_daily_t_700.arrow" ) )
+rename!( df7, :t=>:t700 )
+@transform! df1 :t700=df7.t700
+df1.lon = convert.( Float16, df1.lon )
+df1.lat = convert.( Float16, df1.lat )
+
 @rtransform! df1 :lon = :lon .> 180 ? :lon .- 360 : :lon
 df1 = get_subtrop( df1 )
-df7 = DataFrame( Arrow.Table( "./data/processed/climate/era5_daily_t_700.arrow" ) )
-@select! df7 :time :lat :lon :t
-rename!( df7, :t=>:t700 )
-@rtransform! df7 :lon = :lon .> 180 ? :lon .- 360 : :lon
-df7 = get_subtrop( df7 )
-@transform! df1 :t700=df7.t700
 dropmissing!(df1)
 
-@transform! df1 :eis=EIS.(:t1000, :t700)
-@select! df1 :time :lat :lon :eis
-
-@transform! df1 :date=Date.(:time)
+@transform! df1 :eis=EIS.(:t1000, :t700) :date=Date.(:time)
 @select! df1 :date :lat :lon :eis
+ 
 Arrow.write("./data/processed/climate/era5_daily_eis.arrow", df1)

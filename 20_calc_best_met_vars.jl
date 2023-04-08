@@ -6,7 +6,7 @@ df = DataFrame( Arrow.Table( "./data/processed/subtropics_with_climate.arrow" ) 
 df = @subset df :Label.!=0 
 dropmissing!( df, [:lts, :blh, :w, :u, :v , :t, :q, :sst, :msl] ) 
 
-dropmissing!( df, [:lts, :blh, :w, :u, :v , :t, :q, :sst, :msl, :pr, :aot, :swh] )
+dropmissing!( df, [:lts, :blh, :w, :u, :v , :t, :q, :sst, :msl, :pr, :aot, :swh, :eis] )
 
 @transform! df :sst=round_step.(:sst, 0.3) :w=round_step.(:w, 0.12) :t=round_step.(:t, 0.5) :q=round_step.(:q, 0.00025) :lts=round_step.(:lts, 0.5) :blh=round_step.(:blh, 35) :u=round_step.(:u, 1) :v=round_step.(:v, 1) :msl=round_step.(:msl, 100) :pr=round_step.(:pr, 5) :aot=round_step.(:aot, 0.07) :swh=round_step.(:swh, 0.1)
 

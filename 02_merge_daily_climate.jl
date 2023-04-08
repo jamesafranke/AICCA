@@ -16,19 +16,6 @@ clim = ["era5_daily_lts.arrow", "era5_daily_blh.arrow", "era5_daily_w.arrow", "e
     dft = get_subtrop( dft )
     leftjoin!( df, dft, on = [:date, :lat, :lon] )
 end 
-Arrow.write(  "./data/processed/subtropics_with_climate.arrow" , df )
+Arrow.write(  "./data/processed/AICCA_subtropics_with_climate.arrow" , df )
 
-
-
-
-
-
-
-df = DataFrame( Arrow.Table( "./data/processed/subtropics_with_climate.arrow" ) )
-@transform! df :date=Date.(:Timestamp)
-dft = DataFrame( Arrow.Table( "./data/processed/climate/era5_daily_eis.arrow" ) )
-dft.lon = convert.( Float16, dft.lon )
-dft.lat = convert.( Float16, dft.lat ) 
-leftjoin!( df, dft, on = [:date, :lat, :lon] )
-
-Arrow.write(  "./data/processed/subtropics_with_climate.arrow" , df )
+Arrow.write(  "./data/processed/AICCA_subtropics.arrow" , df )
