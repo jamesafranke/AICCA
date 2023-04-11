@@ -1,6 +1,6 @@
 using Arrow, DataFrames, DataFramesMeta, Dates, ProgressMeter, Statistics
 if occursin("AICCA", pwd()) == false cd("AICCA") else end
-round_step(x, step) = round(x / step) * step
+include("00_helper.jl")
 
 df = DataFrame( Arrow.Table( "./data/processed/subtropics_with_climate.arrow" ) )
 df = @subset df :Label.!=0 
@@ -53,5 +53,8 @@ end
 
 temp  = @by dfc :maxclass :counts=size(:maxcount)[1]
 @orderby temp -:counts
+
+
+
 
 

@@ -1,6 +1,7 @@
 using Arrow, DataFrames, DataFramesMeta, Dates
 if occursin("AICCA", pwd()) == false cd("AICCA") else end
 
+minmax(x) = (x .- minimum(skipmissing(x))) ./ (maximum(skipmissing(x)) - minimum(skipmissing(x)))
 round_step(x, step) = round(x / step) * step
 
 function get_subtrop(dfin) ### subtropical regions with large sc decks ###
