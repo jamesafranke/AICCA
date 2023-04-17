@@ -12,6 +12,15 @@ function get_subtrop(dfin) ### subtropical regions with large sc decks ###
     return dfout
 end
 
+function q2rh(q, t, press = 925)
+    t = t.-273.15
+    es =  6.112 .* exp.((17.67 .* t)./(t .+ 243.5))
+    e  = q .* press ./ (0.378 .* q .+ 0.622)
+    rh = e ./ es 
+    return rh .* 100
+end 
+
+
 LTS(T1000, T700) = T700 * (1000/700)^0.286 - T1000 * (1000/1000)^0.286  #### Lower tropospheric Stability #####
 
 function EIS(T1000, T700, RH=0.8) ### Estimated inversion strenght from WOOD and BRETHERTON, 2006 ####
