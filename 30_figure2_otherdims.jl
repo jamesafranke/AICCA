@@ -1,6 +1,5 @@
 using Plots; gr(); Plots.theme(:default) #plotlyjs()
-using Arrow, DataFrames, DataFramesMeta, Dates 
-using Statistics
+using Arrow, DataFrames, DataFramesMeta, Dates, Statistics
 if occursin("AICCA", pwd()) == false cd("AICCA") else end
 
 ### load in class data for the sub tropics merged with climate vars ###
@@ -213,15 +212,3 @@ for class in colorclass
     inregion = sum(temp.maxcount)
     print( class,"___", inregion/total * 100)
 end
-
-
-#class 25 --> 45% of occurrences are in dominant region
-6 --> 10% 
-27 -->17%
-8 --> 41%
-40 --> 32%
-36 --> 2%
-32 --> 0.03%
-33 --> 0.03%
-30 --> 96%
-35 --> 49%

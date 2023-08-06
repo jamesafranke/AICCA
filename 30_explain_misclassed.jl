@@ -55,5 +55,5 @@ transform!(groupby(df, [:lat, :lon]), :aot => Impute.locf => :aot)
 df
 
 
-ffill(v) = v[accumulate(max, [i*!ismissing(v[i]) for i in 1:length(v)], init=1)
+#ffill(v) = v[accumulate(max, [i*!ismissing(v[i]) for i in 1:length(v)], init=1) end
 transform!(groupby(df, [:lat, :lon]), :aot=ffill(:aot))
