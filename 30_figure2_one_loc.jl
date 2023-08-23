@@ -13,6 +13,8 @@ df = DataFrame( Arrow.Table( "./data/processed/AICCA_with_climate_no_dec_2021.ar
 #df = @subset df :Label .∈ Ref([25,27,30,35])
 
 
+
+
 lat = 29
 lon = -130
 dfts = @subset df :lat.>=lat :lat.<=lat+1 :lon.>=lon :lon.<=lon+1
