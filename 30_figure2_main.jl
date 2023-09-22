@@ -74,6 +74,8 @@ dfc = @chain df begin
     @subset :total.>50
 end
 
+dfc = 1
+
 scalef(x) = x.*13 #sqrt.(x.*100)/2.5
 scatter( size=(500,500), grid = false, leg=false, dpi=900)
 
