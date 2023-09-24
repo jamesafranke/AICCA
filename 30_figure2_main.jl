@@ -16,6 +16,18 @@ df = DataFrame( Arrow.Table( "./data/processed/AICCA_with_climate_no_dec_2021.ar
 @select! df :Label :lat :lon :eis :t1000 :cloud_fraction
 df = dropmissing(df, [:eis, :t1000] )
 
+df = @subset df :Label.!=0
+
+8166479 / 19263919 
+
+13041513 / 16623106
+
+temp = @subset df :Label .> 11
+
+@rsubset df :Label .∈ Ref([20, 36, 27, 40, 25, 23, 30, 24, 28, 35])
+
+unique(temp.Label)
+
 dfc = @chain df begin  
     @transform :xbin=round_step.(:t1000, 0.3) :ybin=round_step.(:eis, 0.35)
     @aside replace!(_.ybin, -0.0 => 0.0)

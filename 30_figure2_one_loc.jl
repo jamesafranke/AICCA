@@ -5,6 +5,8 @@ round_step(x, step) = round(x / step) * step
 
 dfc = DataFrame( Arrow.Table( "./data/processed/to_python_subtrop_met_bins_1000_eis.arrow" ) )
 dfc = @subset dfc :total.>50
+rename!(dfc, :xbin=>:t1000, :ybin=>:eis)
+@select! dfc :t1000 :eis :plotclass
 colorclass = [ 20, 36, 27, 40, 25, 23, 30, 24, 28, 35]
 colors = cgrad(:vik, 10, categorical = true, rev = true) 
 high = [1,2,3,4,5,6,7,8,9,11,12,17]
@@ -12,15 +14,29 @@ high = [1,2,3,4,5,6,7,8,9,11,12,17]
 df = DataFrame( Arrow.Table( "./data/processed/AICCA_with_climate_no_dec_2021.arrow" ) )
 #df = @subset df :Label .∈ Ref([25,27,30,35])
 
-
-
-
 lat = 29
 lon = -130
 dfts = @subset df :lat.>=lat :lat.<=lat+1 :lon.>=lon :lon.<=lon+1
 @transform! dfts :date=Date.(:Timestamp)
-dftss = @subset dfts :date.>Date(2009,6,1) :date.<Date(2011,9,1) :Label .∈ Ref([25,27,30,35])
+dftss = @subset dfts :date.>Date(2009,6,1) :date.<Date(2011,9,1) # :Label.∈Ref([25,27,30,35])
 
+
+### get predicted class ###
+@select! dftss :Timestamp :Label :t1000 :eis
+@transform! dftss :eis=round_step.(:eis, 0.35) :t1000=round_step.(:t1000, 0.30) 
+dftss = leftjoin(dftss, dfc, on=[:eis, :t1000])
+@transform! dftss :expt=1
+
+scatter(size=(400,300), grid = false, leg=false, dpi=800)
+for (i, class) in enumerate(colorclass)
+    temp = @subset dftss :plotclass.==class
+    @df temp scatter!(:Timestamp, :expt, markershape=:vline, markersize = 10, markeralpha = 0.8, 
+    markercolor = colors[i], markerstrokewidth = 1, markerstrokecolor=:black)
+end
+ylims!(0,2)
+png("./figures/fig3_predicted.png")
+
+### figure 3 top ###
 scatter(size=(400,300), grid = false, leg=false, dpi=800)
 for (i, class) in enumerate(colorclass)
     temp = @subset dftss :Label.==class
@@ -30,6 +46,8 @@ end
 ylims!(-2,22)
 
 png("./figures/fig3a.png")
+
+
 
 
 scatter(size=(400,300), grid = false, leg=false, dpi=800)
