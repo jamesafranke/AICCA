@@ -104,40 +104,33 @@ temp = @by df [:Timestamp,:lat_0,:lon_0] :max_time=maximum(:tstep)
 @select! temp :Timestamp :lat_0 :lon_0 :max_time
 df = leftjoin(df, temp, on =[:Timestamp,:lat_0,:lon_0])
 
+temp = @subset df :Label.==30
+temp = @subset temp :max_time.<6
 
-temp = @subset df :max_time .<6
-temp2 = @subset df :max_time .>12
-temp2 = @subset temp2 :max_time .<18
+temp1 = @subset temp :next_label.==:Label
+temp2 = @subset temp :next_label.!=:Label
+temp2 = @subset temp2 :next_label.∉Ref([35,31,33])
+temp2 = @subset temp2 :next_label.>11
+temp3 = @subset temp :next_label.==35
 
-temp = @subset temp2 :Label.==:next_label
-temp2 = @subset temp2 :Label.!=:next_label
-
-
-
-
-temp = @subset df :tstep.==24
-
-df1 = @subset temp :next_label.==27 
-df2 = @subset temp :next_label.==35 
-
-df1 = @by temp [:tstep] :meanpr=mean(:prt)
+df1 = @by temp1 [:tstep] :meanpr=mean(:prt)
 df2 = @by temp2 [:tstep] :meanpr=mean(:prt)
+df3 = @by temp3 [:tstep] :meanpr=mean(:prt)
+
+scatter(size=(500,400), grid = false, leg=false, dpi=800)
+@df df1 plot!(:tstep, :meanpr, color="#F67E66", markerstrokewidth =0)
+@df df2 plot!(:tstep, :meanpr, color="#A2B3C2", markerstrokewidth =0)
+@df df3 plot!(:tstep, :meanpr, color="#009F99", markerstrokewidth =0)
+
+@df df1 scatter!(:tstep, :meanpr, markershape=:circle, markersize = 4, markeralpha = 0.8, markercolor="#F67E66", markerstrokewidth =0)
+@df df2 scatter!(:tstep, :meanpr, markershape=:circle, markersize = 4, markeralpha = 0.8, markercolor="#A2B3C2", markerstrokewidth =0)
+@df df3 scatter!(:tstep, :meanpr, markershape=:circle, markersize = 4, markeralpha = 0.8, markercolor="#009F99", markerstrokewidth =0)
+
+ylims!(0,0.04)
+xlims!(0,5.8)
+
+png("./figures/transition.png")
 
 
-plot(df1.meanpr)
-plot!(df2.meanpr)
 
-
-df = DataFrame( Arrow.Table( "./data/processed/transitions/all_transitions_pr24_merge.arrow" ) )
-df = @subset df :next_label.==30
-df = @subset df :hours.>12
-df = @subset df :hours.<6
-
-temp = @subset df :Label.==:next_label
-temp2 = @subset df :Label.!=:next_label
-
-23533 / (117353 + 23533)
-
-19862 / (127093 + 19862)
-
-29360 / 71689
+default(:fontfamily)

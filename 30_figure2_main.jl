@@ -1,7 +1,6 @@
 using Plots, StatsPlots; gr(); Plots.theme(:default) #plotlyjs()
 using Arrow, DataFrames, DataFramesMeta, Dates, Statistics
 if occursin("AICCA", pwd()) == false cd("AICCA") else end
-
 round_step(x, step) = round(x / step) * step
 
 ### load in class data for the sub tropics merged with climate vars ###
@@ -161,4 +160,97 @@ end
 Arrow.write( "./data/processed/geo_plot_no_zeros.arrow", dfc )
 
 
+
+
+
+
+# CLASS PURITY NUMBERS
+
+df = DataFrame( Arrow.Table( "./data/processed/AICCA_with_climate_no_dec_2021.arrow" ) )
+df = @subset df :Label.!=0
+@select! df :Label :lat :lon :eis :t1000 :cloud_fraction
+dropmissing!(df, [:eis, :t1000] )
+@transform! df :xbin=round_step.(:t1000, 0.3) :ybin=round_step.(:eis, 0.35)
+@rtransform! df :ybin=:ybin.==-0.0 ? 0.0 : :ybin
+
+bins = DataFrame( Arrow.Table( "./data/processed/to_python_subtrop_met_bins_1000_eis.arrow" ) )
+df = leftjoin(df, bins, on=[:xbin,:ybin])
+df = @by df [:xbin, :ybin] :num=size(:Label)[1]
+df = leftjoin(df, bins, on=[:xbin,:ybin])
+
+
+scalef(x) = x ./ 2000
+scatter( size=(500,500), grid = false, leg=false, dpi=900)
+
+temp = @rsubset df :plotclass .∈ Ref(high)
+@df temp scatter!( :xbin, :ybin, markershape=:circle, markersize=scalef(:num), markeralpha=0.5, markercolor=:lightgray, markerstrokewidth=0)
+
+temp = @rsubset df :plotclass .∉ Ref(vcat(colorclass, high))
+@df temp scatter!( :xbin, :ybin, markershape=:circle, markersize=scalef(:num), markeralpha=0.5, markercolor=:gray, markerstrokewidth=0)
+
+for (i, class) in enumerate(colorclass)
+    temp = @subset df :plotclass.==class
+    @df temp scatter!( :xbin, :ybin, markershape=:circle, markersize=scalef(:num),markeralpha = 0.7, markercolor=colors[i], markerstrokewidth=0)
+end
+
+scatter!( [301,301,301], [32.7,30.5,29].-8, markersize=[scalef(30000), scalef(15000), scalef(5000)],
+markershape=:circle, markeralpha=0.5, markercolor=:gray, markerstrokewidth=0)
+
+xlims!(278, 303)
+ylims!(-3, 26.5)
+png("./figures/heatmap_eis_t1000_occurance.png")
+
+
+
+
+
+
+
+
+
+df = DataFrame( Arrow.Table( "./data/processed/AICCA_with_climate_no_dec_2021.arrow" ) )
+df = @subset df :Label.!=0
+@select! df :Label :lat :lon :eis :t1000 :cloud_fraction
+dropmissing!(df, [:eis, :t1000] )
+@transform! df :xbin=round_step.(:t1000, 0.3) :ybin=round_step.(:eis, 0.35)
+@rtransform! df :ybin=:ybin.==-0.0 ? 0.0 : :ybin
+
+bins = DataFrame( Arrow.Table( "./data/processed/to_python_subtrop_met_bins_1000_eis.arrow" ) )
+df = leftjoin(df, bins, on=[:xbin,:ybin])
+
+
+temp = @subset df :Label.==35
+
+temp1 = @subset temp :plotclass.==30
+
+temp2 = @subset temp :plotclass.!=35
+
+
+431275 / 1286288
+
+
+df = DataFrame( Arrow.Table( "./data/processed/AICCA_with_climate_no_dec_2021.arrow" ) )
+dfc = @chain df begin 
+    @subset :Label.!=0 
+    @transform :xbin=round_step.(:t1000, 0.3) :ybin=round_step.(:eis, 0.35)
+    @by [:xbin, :ybin, :Label] :counts=size(:Label)[1]
+    @orderby :counts rev=true
+    @by [:xbin, :ybin] :maxclass=last(:Label) :maxcount=last(:counts) :total=sum(:counts)
+    @transform :fracinbin=:maxcount./:total
+    @subset :total.>50
+end
+
+temp = @subset dfc :maxclass.==25
+@orderby temp :fracinbin
+
+mean(dfc.fracinbin, weights(dfc.total))
+
+dropmissing!(dfc)
+
+
+
+
+#Drizzle proxy
+
+mdp= 0.37*(:lwp/:nd)^1.75
 

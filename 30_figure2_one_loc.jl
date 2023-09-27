@@ -18,7 +18,7 @@ lat = 29
 lon = -130
 dfts = @subset df :lat.>=lat :lat.<=lat+1 :lon.>=lon :lon.<=lon+1
 @transform! dfts :date=Date.(:Timestamp)
-dftss = @subset dfts :date.>Date(2009,6,1) :date.<Date(2011,9,1) # :Label.∈Ref([25,27,30,35])
+dftss = @subset dfts :date.>Date(2009,6,1) :date.<Date(2011,9,1)  :Label.∈Ref([25,27,30,35])
 
 
 ### get predicted class ###
@@ -197,4 +197,28 @@ ylims!(-3,23)
 png("./figures/fig3.png")
 
 
-sftp 'jfrankeATuchicago.edu@www.cloudsat.cira.colostate.edu:Data/2B-GEOPROF.P1_R05/2012/15*' .
+#sftp 'jfrankeATuchicago.edu@www.cloudsat.cira.colostate.edu:Data/2B-GEOPROF.P1_R05/2012/15*' .
+
+
+
+#numbers for liz
+
+df = DataFrame( Arrow.Table( "./data/processed/AICCA_with_climate_no_dec_2021.arrow" ) )
+#df = @subset df :Label .∈ Ref([25,27,30,35])
+@subset df :Label.!=0
+
+unique(df.Label)
+
+temp = @by df :Label :num=size(:Label)[1]
+
+
+temp = @orderby temp :num
+temp = @subset temp :Label.!=0
+
+@subset df :Label.∈Ref([ 20, 36, 27, 40, 25, 23, 30, 24, 28, 35])
+
+30, 35, 40, 36, 26, 27, 39, 32, 37, 19, 29, 25, 33, 41
+
+temp
+
+bar(temp.Label, temp.num)
