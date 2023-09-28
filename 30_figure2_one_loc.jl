@@ -12,13 +12,39 @@ colors = cgrad(:vik, 10, categorical = true, rev = true)
 high = [1,2,3,4,5,6,7,8,9,11,12,17]
 
 df = DataFrame( Arrow.Table( "./data/processed/AICCA_with_climate_no_dec_2021.arrow" ) )
-#df = @subset df :Label .∈ Ref([25,27,30,35])
+df = @subset df :Label .∈ Ref([25,27,30,35])
+#temp = @subset df :pr.<0.1
 
-lat = 29
-lon = -130
+df = @subset df Date.(:Timestamp).==Date("2020-10-26")
+Arrow.write( "./data/processed/AICCA_drizzle_proxy_2010_2013_transitions.arrow", df )
+
+
+lat = -30
+lon = -75
 dfts = @subset df :lat.>=lat :lat.<=lat+1 :lon.>=lon :lon.<=lon+1
 @transform! dfts :date=Date.(:Timestamp)
 dftss = @subset dfts :date.>Date(2009,6,1) :date.<Date(2011,9,1)  :Label.∈Ref([25,27,30,35])
+
+### figure 3 top ###
+scatter(size=(400,300), grid = false, leg=false, dpi=800)
+for (i, class) in enumerate(colorclass)
+    temp = @subset dftss :Label.==class
+    @df temp scatter!( :date, :eis, markershape = :circle, markersize = 5, markeralpha = 0.8, 
+    markercolor = colors[i], markerstrokewidth = 0, markerstrokecolor=:black)
+end
+ylims!(-2,24)
+png("./figures/fig3a.png")
+
+scatter(size=(400,300), grid = false, leg=false, dpi=800)
+for (i, class) in enumerate(colorclass)
+    temp = @subset dftss :Label.==class
+    @df temp scatter!( :date, :t1000, markershape = :circle, markersize = 5, markeralpha = 0.8, 
+    markercolor = colors[i], markerstrokewidth = 0, markerstrokecolor=:black)
+end
+ylims!(282,294)
+png("./figures/fig3b.png")
+
+
 
 
 ### get predicted class ###
@@ -35,34 +61,6 @@ for (i, class) in enumerate(colorclass)
 end
 ylims!(0,2)
 png("./figures/fig3_predicted.png")
-
-### figure 3 top ###
-scatter(size=(400,300), grid = false, leg=false, dpi=800)
-for (i, class) in enumerate(colorclass)
-    temp = @subset dftss :Label.==class
-    @df temp scatter!( :date, :eis, markershape = :circle, markersize = 5, markeralpha = 0.8, 
-    markercolor = colors[i], markerstrokewidth = 0, markerstrokecolor=:black)
-end
-ylims!(-2,22)
-
-png("./figures/fig3a.png")
-
-
-
-
-scatter(size=(400,300), grid = false, leg=false, dpi=800)
-for (i, class) in enumerate(colorclass)
-    temp = @subset dftss :Label.==class
-    @df temp scatter!( :date, :t1000, markershape = :circle, markersize = 5, markeralpha = 0.8, 
-    markercolor = colors[i], markerstrokewidth = 0, markerstrokecolor=:black)
-end
-ylims!(282,294)
-
-png("./figures/fig3b.png")
-
-
-
-
 
 
 
