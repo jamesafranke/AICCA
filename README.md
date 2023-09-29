@@ -6,11 +6,3 @@ Processing scripts for the AICCA deep learning based cloud classifcation dataset
 
 
 # workflow
-
-First, download the raw long-form processed data at globuslabs at: 
-
-process global files to subtropics with <00*proccess*.jl>
-
-merge with climate data with <01_merge_daily_climate.jl>
-
-....
