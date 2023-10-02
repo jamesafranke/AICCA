@@ -45,13 +45,16 @@ ylabel!("MOIDS drizzle proxy [mm/day]")
 
 
 
-
 # join drizzle proxy with transitions
 mdp = DataFrame( Arrow.Table( "./data/processed/AICCA_drizzle_proxy_2010_2013.arrow" ) )
 temp = 0.37.*(mdp.water_path./mdp.Nd_all).^1.75
 mdp = @transform mdp :mdp=temp
 @transform! mdp :Timestamp=round.(:Timestamp, Hour(1))
 mdp = @select mdp :Timestamp :lat :lon :mdp
+
+@subset mdp :mdp.<0.1
+
+20968/ 209178
 
 df = DataFrame( Arrow.Table( "./data/processed/transitions/all_transitions_SP_pr24.arrow" ) )
 @transform! df :year=year.(:Timestamp)
@@ -67,11 +70,11 @@ df = leftjoin(df, mdp, on=[:Timestamp, :lat, :lon])
 rename!(mdp, :lat=>:lat_0, :lon=>:lon_0, :Timestamp=>:Timestamp_0, :mdp=>:mdp_0 )
 df = leftjoin(df, mdp, on=[:Timestamp_0, :lat_0, :lon_0])
 
-
+dropmissing!(df, [:mdp, :mdp_0])
 
 Arrow.write( "./data/processed/AICCA_drizzle_proxy_2010_2013_transitions.arrow", df )
 
-df = DataFrame( Arrow.Table("./data/processed/AICCA_drizzle_proxy_2010_2013_transitions.arrow"))
+#df = DataFrame( Arrow.Table("./data/processed/AICCA_drizzle_proxy_2010_2013_transitions.arrow"))
 temp = @subset df :Label.==30
 temp = @subset temp :tstep.<6
 temp = @transform temp :dlat = :lat-:lat_0

@@ -99,6 +99,8 @@ dropmissing!(df)
 
 
 Arrow.write( "./data/processed/transitions/all_transitions_SP_pr24_merge.arrow", df )
+
+
 df = DataFrame( Arrow.Table( "./data/processed/transitions/all_transitions_SP_pr24_merge.arrow" ) )
 temp = @by df [:Timestamp,:lat_0,:lon_0] :max_time=maximum(:tstep)
 @select! temp :Timestamp :lat_0 :lon_0 :max_time
@@ -106,6 +108,9 @@ df = leftjoin(df, temp, on =[:Timestamp,:lat_0,:lon_0])
 
 temp = @subset df :Label.==30
 temp = @subset temp :max_time.<6
+
+@subset temp :prt.<0.008
+#temp = @subset temp :tstep.==:max_time
 
 temp1 = @subset temp :next_label.==:Label
 temp2 = @subset temp :next_label.!=:Label
@@ -133,4 +138,9 @@ png("./figures/transition.png")
 
 
 
-default(:fontfamily)
+
+
+
+using HypothesisTests
+
+UnequalVarianceTTest(temp2.prt, temp3.prt)

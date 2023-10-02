@@ -15,18 +15,6 @@ df = DataFrame( Arrow.Table( "./data/processed/AICCA_with_climate_no_dec_2021.ar
 @select! df :Label :lat :lon :eis :t1000 :cloud_fraction
 df = dropmissing(df, [:eis, :t1000] )
 
-df = @subset df :Label.!=0
-
-8166479 / 19263919 
-
-13041513 / 16623106
-
-temp = @subset df :Label .> 11
-
-@rsubset df :Label .∈ Ref([20, 36, 27, 40, 25, 23, 30, 24, 28, 35])
-
-unique(temp.Label)
-
 dfc = @chain df begin  
     @transform :xbin=round_step.(:t1000, 0.3) :ybin=round_step.(:eis, 0.35)
     @aside replace!(_.ybin, -0.0 => 0.0)
@@ -178,6 +166,20 @@ df = leftjoin(df, bins, on=[:xbin,:ybin])
 df = @by df [:xbin, :ybin] :num=size(:Label)[1]
 df = leftjoin(df, bins, on=[:xbin,:ybin])
 
+temp = @subset df :Label .∈ Ref([20, 36, 27, 40, 25, 23, 30, 24, 28, 35])
+
+@subset temp :Label.==:plotclass
+
+@subset temp :Label.!=:plotclass
+
+2625620/5540859
+
+temp = @subset df :Label.>19
+@subset temp :Label.==:nonzeroclass
+
+@subset temp :Label.!=:nonzeroclass
+
+2668186 / 12379104
 
 scalef(x) = x ./ 2000
 scatter( size=(500,500), grid = false, leg=false, dpi=900)
@@ -250,7 +252,93 @@ dropmissing!(dfc)
 
 
 
-#Drizzle proxy
+#numbers for liz
+temp = Arrow.write( "./data/processed/to_python_subtrop_met_bins_1000_eis.arrow", dfc )
 
-mdp= 0.37*(:lwp/:nd)^1.75
+@subset! df :Label.==30
+@subset! df :lat.>-40 :lat.<5 :lon.>-130 :lon.<-70 
 
+df = @subset df :Label.==0
+
+df = dropmissing(df, :pr)
+temp = @subset df :pr.==0
+
+temp = @subset df :pr.<0.1
+
+mean(skipmissing(df.cloud_fraction))
+3352902
+
+8166479 / 19263919 
+
+13041513 / 16623106
+
+temp = @subset df :Label .> 11
+
+@rsubset df :Label .∈ Ref([20, 36, 27, 40, 25, 23, 30, 24, 28, 35])
+
+unique(temp.Label)
+
+
+
+
+
+# WHERE ERA5 is good at clouds 
+
+era = DataFrame( Arrow.Table( "./data/processed/era5_cc_2020_10.arrow" ) )
+rename!(era, :latitude=>:lat, :longitude=>:lon)
+@transform! era :hour=Hour.(:time) :day=Day.(:time)
+@select! era :lat :lon :hour :day :tcc
+
+era = DataFrame( Arrow.Table( "./data/processed/aicca_plus_era5_cc_2020_10.arrow" ) )
+
+df = DataFrame( Arrow.Table( "./data/processed/AICCA_with_climate_no_dec_2021.arrow" ) )
+df = @subset df :Label.!=0
+@select! df :Label :lat :lon :eis :t1000 :cloud_fraction :Timestamp
+dropmissing!(df, [:eis, :t1000] )
+@transform! df :xbin=round_step.(:t1000, 0.3) :ybin=round_step.(:eis, 0.35)
+@rtransform! df :ybin=:ybin.==-0.0 ? 0.0 : :ybin
+df = @subset df month.(:Timestamp).==10 year.(:Timestamp).==2020
+@transform! df :hour=Hour.(:Timestamp) :day=Day.(:Timestamp)
+@transform! df :lat=round_step.(:lat, 0.25) :lon=round_step.(:lon, 0.25)
+@rtransform! df :lat=:lat.==-0.0 ? 0.0 : :lat :lon=:lon.==-0.0 ? 0.0 : :lon
+
+df = leftjoin(df, era, on=[:lat,:lon,:hour,:day])
+
+Arrow.write( "./data/processed/aicca_plus_era5_cc_2020_10.arrow", df )
+
+df = DataFrame( Arrow.Table( "./data/processed/aicca_plus_era5_cc_2020_10.arrow" ) )
+bins = DataFrame( Arrow.Table( "./data/processed/to_python_subtrop_met_bins_1000_eis.arrow" ) )
+df = leftjoin(df, bins, on=[:xbin,:ybin])
+
+
+dropmissing!(df, :tcc)
+
+temp = @transform df :tcc=:tcc.*100
+
+@transform! temp :tcc=round_step.(:tcc,10) :cloud_fraction=round_step.(:cloud_fraction,10)
+
+
+temp1 = @subset temp :Label.==30
+temp2 = @subset temp1 :Label.==:nonzeroclass
+temp3 = @subset temp1 :Label.!=:nonzeroclass
+
+
+temp1 = @subset temp :tcc.==:cloud_fraction
+temp1 = @subset temp1 :Label.==30
+temp2 = @subset temp1 :Label.==:nonzeroclass
+temp3 = @subset temp1 :Label.!=:nonzeroclass
+
+mean(temp1.lat)
+
+temp1 = @subset temp :tcc.!=:cloud_fraction
+temp1 = @subset temp1 :Label.==30
+temp2 = @subset temp1 :Label.==:nonzeroclass
+temp3 = @subset temp1 :Label.!=:nonzeroclass
+
+mean(temp1.lat)
+
+@df df scatter(:tcc, :cloud_fraction)
+
+names(temp)
+
+round_step(10.5, 10)
